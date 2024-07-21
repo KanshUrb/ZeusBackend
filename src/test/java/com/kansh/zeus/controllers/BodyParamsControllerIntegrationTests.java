@@ -95,7 +95,7 @@ public class BodyParamsControllerIntegrationTests {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer invalidToken")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bodyParamsDtoA1)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -117,7 +117,7 @@ public class BodyParamsControllerIntegrationTests {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/bodyParams/")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer invalidToken")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -138,7 +138,7 @@ public class BodyParamsControllerIntegrationTests {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/bodyParams/1")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer invalidToken")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -190,6 +190,6 @@ public class BodyParamsControllerIntegrationTests {
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/bodyParams/1")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer invalidToken")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 }

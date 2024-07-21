@@ -41,7 +41,7 @@ public class UserController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if(validateToken.validateToken(authorizationHeader) == null) {
             log.error("UserController:checkIfUserExists ERROR : Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         if (userService.checkIfUserExists(userToken.getId())) {

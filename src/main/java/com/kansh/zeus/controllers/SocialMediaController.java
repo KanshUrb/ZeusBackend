@@ -62,7 +62,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::addFriend ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -83,7 +83,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::removeFriend ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -103,7 +103,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::getFriends ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -130,7 +130,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::createPost ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -179,7 +179,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::getPosts ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -212,7 +212,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::updatePost ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -233,7 +233,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::deletePost ERROR: Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -254,7 +254,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::likePost ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -275,7 +275,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::unlikePost ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -297,7 +297,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::commentOnPost ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -325,7 +325,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::getCommentsForPost ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -347,7 +347,7 @@ public class SocialMediaController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::deleteComment ERROR: Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {

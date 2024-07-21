@@ -1,6 +1,7 @@
 package com.kansh.zeus.controllers;
 
 import com.kansh.zeus.config.ValidateToken;
+import com.kansh.zeus.domain.dto.users.UserTokenDto;
 import com.kansh.zeus.domain.dto.users.UsersDto;
 import com.kansh.zeus.domain.dto.exercises.*;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.Objects.isNull;
 
 @Slf4j
 @RestController
@@ -49,23 +52,22 @@ public class ExercisesController {
         this.usersMapper = usersMapper;
     }
 
-    @GetMapping("/exercises/summaries/{userId}/")
+    @GetMapping("/exercises/summaries/")
     public ResponseEntity<PageDto<ExercisesSummaryDto>> getExercisesSummaryAvailableForUser(@RequestHeader("Authorization") String authorizationHeader,
-                                                                       @PathVariable String userId,
                                                                        @RequestParam(defaultValue = "0") int page,
                                                                        @RequestParam(defaultValue = "10") int size) {
         log.info("ExercisesController::getExercisesSummaryAvailableForUser START");
-        log.debug("ExercisesController::getExercisesSummaryAvailableForUser userId = {}, page = {}, size = {}", userId, page, size);
+        log.debug("ExercisesController::getExercisesSummaryAvailableForUser page = {}, size = {}", page, size);
 
-        if(validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::getExercisesSummaryAvailableForUser ERROR : Invalid authorization header!");
-            PageDto<ExercisesSummaryDto> emptyResponse = new PageDto<>(Collections.emptyList(), page, size, 0, 0);
-            return ResponseEntity.badRequest().body(emptyResponse);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Object[]> exercisesSummaryEntity = exerciseService.getExercisesSummariesAvailableForUser(userId, pageable);
+            Page<Object[]> exercisesSummaryEntity = exerciseService.getExercisesSummariesAvailableForUser(userToken.getId(), pageable);
             List<ExercisesSummaryDto> exercisesSummaryDto = exercisesSummaryEntity.stream()
                     .map(result -> ExercisesSummaryDto.builder()
                             .id((Long) result[0])
@@ -82,7 +84,7 @@ public class ExercisesController {
                     .build();
 
             log.info("ExercisesController::getExercisesSummaryAvailableForUser STOP response = {}", response);
-            return ResponseEntity.ok(response);
+            return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (Exception e) {
             log.error("ExercisesController::getExercisesSummaryAvailableForUser ERROR", e);
@@ -91,18 +93,18 @@ public class ExercisesController {
 
     }
 
-    @GetMapping("/exercises/{exerciseId}/{userId}")
+    @GetMapping("/exercises/{exerciseId}")
     public ResponseEntity<ExercisesDto> getExercisesByUserAndId(@RequestHeader("Authorization") String authorizationHeader,
-                                                @PathVariable Long exerciseId,
-                                                @PathVariable String userId) {
-        log.info("ExercisesController::getExercisesByUserAndId START, exerciseId = {}, userId = {}", exerciseId, userId);
+                                                @PathVariable Long exerciseId) {
+        log.info("ExercisesController::getExercisesByUserAndId START, exerciseId = {}", exerciseId);
 
-        if(validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::getExercisesByUserAndId ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        Optional<ExercisesEntity> exercise = exerciseService.getExerciseByUserAndId(userId, exerciseId);
+        Optional<ExercisesEntity> exercise = exerciseService.getExerciseByUserAndId(userToken.getId(), exerciseId);
         if (exercise.isPresent()) {
             ExercisesEntity exercisesEntity = exercise.get();
             log.info("ExercisesController::getExerciseByUserAndId STOP exercise = {}",exercisesEntity);
@@ -119,9 +121,10 @@ public class ExercisesController {
                                                        @RequestBody CreateExerciseWrapper wrapper) {
         log.info("ExercisesController::createExercise START");
 
-        if(validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::createExercise ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         ExercisesDto exercise = wrapper.getExercise();
@@ -144,9 +147,10 @@ public class ExercisesController {
                                                @RequestBody ExercisesDto exercisesDto) {
         log.info("ExercisesController::deleteExercise START exerciseDto = {}", exercisesDto);
 
-        if(validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::deleteExercise ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercisesDto);
@@ -161,9 +165,10 @@ public class ExercisesController {
                                                        @RequestBody ExercisesDto exercisesDto) {
         log.info("ExercisesController::updateExercise START, exerciseDto = {}", exercisesDto);
 
-        if(validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::updateExercise ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         ExercisesEntity exercisesEntity = exerciseService.updateExercise(exercisesMapper.mapFrom(exercisesDto));
@@ -178,9 +183,10 @@ public class ExercisesController {
                                                      @PathVariable Integer rate) {
         log.info("ExercisesController::rateExercise START, exerciseId = {}, rate = {}", exerciseId, rate);
 
-        if(validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::rateExercise ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         exerciseService.rateExercise(exerciseId, rate);
@@ -188,23 +194,22 @@ public class ExercisesController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @GetMapping("/supersets/summaries/{userId}/")
+    @GetMapping("/supersets/summaries")
     public ResponseEntity<PageDto<SupersetsSummaryDto>> getSupersetsSummaryAvailableForUser(@RequestHeader("Authorization") String authorizationHeader,
-                                                                                            @PathVariable String userId,
                                                                                             @RequestParam(defaultValue = "0") int page,
                                                                                             @RequestParam(defaultValue = "10") int size) {
         log.info("ExercisesController::getSupersetsSummaryAvailableForUser START");
-        log.debug("ExercisesController::getSupersetsSummaryAvailableForUser userId = {}, page = {}, size = {}", userId, page, size);
+        log.debug("ExercisesController::getSupersetsSummaryAvailableForUser page = {}, size = {}", page, size);
 
-        if(validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::getSupersetsSummaryAvailableForUser ERROR : Invalid authorization header!");
-            PageDto<SupersetsSummaryDto> emptyResponse = new PageDto<>(Collections.emptyList(), page, size, 0, 0);
-            return ResponseEntity.badRequest().body(emptyResponse);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Object[]> supersetsSummaryEntity = exerciseService.getSupersetsSummariesAvailableForUser(userId, pageable);
+            Page<Object[]> supersetsSummaryEntity = exerciseService.getSupersetsSummariesAvailableForUser(userToken.getId(), pageable);
             List<SupersetsSummaryDto> supersetsSummaryDto = supersetsSummaryEntity.stream()
                     .map(result -> SupersetsSummaryDto.builder()
                             .id((Long) result[0])
@@ -221,27 +226,27 @@ public class ExercisesController {
                     .build();
 
             log.info("ExercisesController::getSupersetsSummaryAvailableForUser STOP response = {}", response);
-            return ResponseEntity.ok(response);
+            return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (Exception e) {
             log.error("ExercisesController::getSupersetsSummaryAvailableForUser ERROR", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
-    @GetMapping("/supersets/{supersetId}/{userId}")
+    @GetMapping("/supersets/{supersetId}")
     public ResponseEntity<SupersetsDto> getSupersetByUserAndId(@RequestHeader("Authorization") String authorizationHeader,
-                                                                @PathVariable Long supersetId,
-                                                                @PathVariable String userId) {
-        log.info("ExercisesController::getSupersetByUserAndId START, exerciseId = {}, userId = {}", supersetId, userId);
+                                                                @PathVariable Long supersetId) {
+        log.info("ExercisesController::getSupersetByUserAndId START, exerciseId = {}", supersetId);
 
-        if (validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::getSupersetByUserAndId ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        Optional<SupersetsEntity> superset = exerciseService.getSupersetByUserAndId(userId, supersetId);
+        Optional<SupersetsEntity> superset = exerciseService.getSupersetByUserAndId(userToken.getId(), supersetId);
         if (superset.isPresent()) {
             SupersetsEntity supersetEntity = superset.get();
             log.info("ExercisesController::getSupersetByUserAndId STOP exercise = {}", supersetEntity);
@@ -258,9 +263,10 @@ public class ExercisesController {
                                                        @RequestBody CreateSupersetWrapper wrapper) {
         log.info("ExercisesController::createSuperset START");
 
-        if (validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::createSuperset ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         SupersetsDto superset = wrapper.getSuperset();
@@ -283,9 +289,10 @@ public class ExercisesController {
                                                @RequestBody SupersetsDto supersetsDto) {
         log.info("ExercisesController::deleteSuperset START exerciseDto = {}", supersetsDto);
 
-        if (validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::deleteSuperset ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         SupersetsEntity supersetEntity = supersetsMapper.mapFrom(supersetsDto);
@@ -300,9 +307,10 @@ public class ExercisesController {
                                                        @RequestBody SupersetsDto supersetsDto) {
         log.info("ExercisesController::updateSuperset START, supersetDto = {}", supersetsDto);
 
-        if (validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::updateSuperset ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         SupersetsEntity supersetEntity = exerciseService.updateSuperset(supersetsMapper.mapFrom(supersetsDto));
@@ -317,32 +325,15 @@ public class ExercisesController {
                                              @PathVariable Integer rate) {
         log.info("ExercisesController::rateSuperset START, supersetId = {}, rate = {}", supersetId, rate);
 
-        if (validateToken.validateToken(authorizationHeader) == null) {
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if (isNull(userToken)) {
             log.error("ExercisesController::rateSuperset ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         exerciseService.rateSuperset(supersetId, rate);
         log.info("ExercisesController::rateSuperset STOP");
         return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    @PostMapping("/exercises/technical/")
-    public ResponseEntity<ExercisesDto> addExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                                    @RequestBody ExercisesDto exercisesDto) {
-        log.info("ExercisesController::addExercise START");
-        log.debug("ExercisesController::addExercise exercise = {}", exercisesDto.toString());
-
-        if (validateToken.validateToken(authorizationHeader) == null) {
-            log.error("ExercisesController::addExercise ERROR : Invalid authorization header!");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-        }
-
-        ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercisesDto);
-        exercisesEntity = exerciseService.addExerciseTechnical(exercisesEntity);
-
-        log.info("ExercisesController::addExercise STOP");
-        return new ResponseEntity<>(exercisesMapper.mapTo(exercisesEntity), HttpStatus.OK);
     }
 
 }

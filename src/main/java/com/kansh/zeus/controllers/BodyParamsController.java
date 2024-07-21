@@ -41,7 +41,7 @@ public class BodyParamsController {
     }
 
     @PostMapping(value = "/bodyParams")
-    public ResponseEntity<Void> addBodyParams(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<BodyParamsDto> addBodyParams(@RequestHeader("Authorization") String authorizationHeader,
                                               @RequestBody BodyParamsDto bodyParamsDto) {
         log.info("BodyPramsController::addBodyParams START");
         log.info("BodyPramsController::addBodyParams bodyParamsDto = {}", bodyParamsDto.toString());
@@ -49,9 +49,10 @@ public class BodyParamsController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("BodyPramsController::addBodyParams ERROR : Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
+        BodyParamsEntity savedBodyParamsEntity;
         try {
             BodyParamsEntity bodyParamsEntity = bodyParamsMapper.mapFrom(bodyParamsDto);
             UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
@@ -61,7 +62,7 @@ public class BodyParamsController {
             }
             bodyParamsEntity.setUser(user);
             log.info("BodyPramsController::addBodyParams bodyParamsEntity = {}", bodyParamsEntity);
-            BodyParamsEntity savedBodyParamsEntity = bodyParamService.saveBodyParams(bodyParamsEntity);
+            savedBodyParamsEntity = bodyParamService.saveBodyParams(bodyParamsEntity);
             if (isNull(savedBodyParamsEntity)) {
                 log.info("BodyPramsController::addBodyParams STOP response = BAD_REQUEST");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -72,17 +73,17 @@ public class BodyParamsController {
         }
 
         log.info("BodyPramsController::addBodyParams STOP response = CREATED");
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return new ResponseEntity<>(bodyParamsMapper.mapTo(savedBodyParamsEntity), HttpStatus.CREATED);
     }
 
-    @GetMapping(value = "/bodyParams/")
+    @GetMapping(value = "/bodyParams")
     public ResponseEntity<List<BodyParamsDto>> getAllBodyParamsForUser(@RequestHeader("Authorization") String authorizationHeader) {
         log.info("BodyPramsController::getAllBodyParamsForUser START");
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("BodyPramsController::getAllBodyParamsForUser ERROR : Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -108,7 +109,7 @@ public class BodyParamsController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("BodyPramsController::getBodyParamsForUser ERROR : Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -137,7 +138,7 @@ public class BodyParamsController {
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("BodyPramsController::updateBodyParamsForUser ERROR : Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -174,7 +175,7 @@ public class BodyParamsController {
 
         if (validateToken.validateToken(authorizationHeader) == null) {
             log.error("BodyPramsController::deleteBodyParamsForUser ERROR : Invalid authorization header!");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         try {
