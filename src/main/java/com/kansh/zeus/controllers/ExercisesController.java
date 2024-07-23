@@ -88,7 +88,7 @@ public class ExercisesController {
 
         } catch (Exception e) {
             log.error("ExercisesController::getExercisesSummaryAvailableForUser ERROR", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }

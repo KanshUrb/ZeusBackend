@@ -15,5 +15,5 @@ public class SupersetsSummaryDto {
 
     private String name;
 
-    private String rate;
+    private Float rate;
 }
