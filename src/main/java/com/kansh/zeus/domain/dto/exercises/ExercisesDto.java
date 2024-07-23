@@ -1,6 +1,5 @@
 package com.kansh.zeus.domain.dto.exercises;
 
-import com.kansh.zeus.domain.dto.users.UsersDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,5 +27,4 @@ public class ExercisesDto {
 
     private Integer userCounter;
 
-    private UsersDto createdBy;
 }
