@@ -2,12 +2,12 @@ package com.kansh.zeus.controllers;
 
 import com.kansh.zeus.config.ValidateToken;
 import com.kansh.zeus.domain.dto.users.UserTokenDto;
-import com.kansh.zeus.domain.dto.users.UsersDto;
 import com.kansh.zeus.domain.dto.exercises.*;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
 import com.kansh.zeus.mappers.Mapper;
+import com.kansh.zeus.repositories.users.UserRepository;
 import com.kansh.zeus.services.ExerciseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,28 +30,28 @@ public class ExercisesController {
 
     private final ExerciseService exerciseService;
 
+    private final UserRepository userRepository;
+
     private final Mapper<ExercisesEntity, ExercisesDto> exercisesMapper;
 
     private final Mapper<SupersetsEntity, SupersetsDto> supersetsMapper;
-
-    private final Mapper<UsersEntity, UsersDto> usersMapper;
 
     private final ValidateToken validateToken;
 
     @Autowired
     public ExercisesController(ExerciseService exerciseService,
+                               UserRepository userRepository,
                                ValidateToken validateToken,
                                Mapper<ExercisesEntity, ExercisesDto> exercisesMapper,
-                               Mapper<SupersetsEntity, SupersetsDto> supersetsMapper,
-                               Mapper<UsersEntity, UsersDto> usersMapper) {
+                               Mapper<SupersetsEntity, SupersetsDto> supersetsMapper) {
         this.exerciseService = exerciseService;
+        this.userRepository = userRepository;
         this.validateToken = validateToken;
         this.exercisesMapper = exercisesMapper;
         this.supersetsMapper = supersetsMapper;
-        this.usersMapper = usersMapper;
     }
 
-    @GetMapping("/exercises/summaries/")
+    @GetMapping("/exercises/summaries")
     public ResponseEntity<PageDto<ExercisesSummaryDto>> getExercisesSummaryAvailableForUser(@RequestHeader("Authorization") String authorizationHeader,
                                                                        @RequestParam(defaultValue = "0") int page,
                                                                        @RequestParam(defaultValue = "10") int size) {
@@ -72,6 +71,7 @@ public class ExercisesController {
                     .map(result -> ExercisesSummaryDto.builder()
                             .id((Long) result[0])
                             .name((String) result[1])
+                            .rate((Float) result[2])
                             .build())
                     .toList();
 
@@ -116,7 +116,7 @@ public class ExercisesController {
 
     }
 
-    @PostMapping("exercises/exercise/")
+    @PostMapping("exercises/exercise")
     public ResponseEntity<ExercisesDto> createExercise(@RequestHeader("Authorization") String authorizationHeader,
                                                        @RequestBody CreateExerciseWrapper wrapper) {
         log.info("ExercisesController::createExercise START");
@@ -128,12 +128,16 @@ public class ExercisesController {
         }
 
         ExercisesDto exercise = wrapper.getExercise();
-        UsersDto user = wrapper.getUser();
         List<String> sharedWith = wrapper.getSharedWith();
-        log.info("ExercisesController::addExercise exercise = {}, user = {}, sharedWith = {}", exercise.toString(), user.toString(), sharedWith);
 
         try {
-            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesMapper.mapFrom(exercise), usersMapper.mapFrom(user), sharedWith);
+            UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
+            if (isNull(user)) {
+                log.error("ExercisesController::createExercise ERROR : User not found!");
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            log.info("ExercisesController::addExercise exercise = {}, user = {}, sharedWith = {}", exercise.toString(), user, sharedWith);
+            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesMapper.mapFrom(exercise), user, sharedWith);
             log.info("ExercisesController::createExercise STOP exercise = {}", savedExercise);
             return new ResponseEntity<>(exercisesMapper.mapTo(savedExercise), HttpStatus.OK);
         } catch (Exception e) {
@@ -142,7 +146,7 @@ public class ExercisesController {
         }
     }
 
-    @DeleteMapping("exercises/exercise/")
+    @DeleteMapping("exercises/exercise")
     public ResponseEntity<Void> deleteExercise(@RequestHeader("Authorization") String authorizationHeader,
                                                @RequestBody ExercisesDto exercisesDto) {
         log.info("ExercisesController::deleteExercise START exerciseDto = {}", exercisesDto);
@@ -160,7 +164,7 @@ public class ExercisesController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PutMapping("exercises/exercise/")
+    @PutMapping("exercises/exercise")
     public ResponseEntity<ExercisesDto> updateExercise(@RequestHeader("Authorization") String authorizationHeader,
                                                        @RequestBody ExercisesDto exercisesDto) {
         log.info("ExercisesController::updateExercise START, exerciseDto = {}", exercisesDto);
@@ -177,7 +181,7 @@ public class ExercisesController {
         return new ResponseEntity<>(exercisesMapper.mapTo(exercisesEntity), HttpStatus.OK);
     }
 
-    @GetMapping("exercises/rate/{exerciseId}/{rate}/")
+    @GetMapping("exercises/rate/{exerciseId}/{rate}")
     public ResponseEntity<Void> rateExercise(@RequestHeader("Authorization") String authorizationHeader,
                                                      @PathVariable Long exerciseId,
                                                      @PathVariable Integer rate) {
@@ -258,7 +262,7 @@ public class ExercisesController {
 
     }
 
-    @PostMapping("supersets/superset/")
+    @PostMapping("supersets/superset")
     public ResponseEntity<SupersetsDto> createSuperset(@RequestHeader("Authorization") String authorizationHeader,
                                                        @RequestBody CreateSupersetWrapper wrapper) {
         log.info("ExercisesController::createSuperset START");
@@ -270,12 +274,16 @@ public class ExercisesController {
         }
 
         SupersetsDto superset = wrapper.getSuperset();
-        UsersDto user = wrapper.getUser();
         List<String> sharedWith = wrapper.getSharedWith();
-        log.info("ExercisesController::addSuperset superset = {}, user = {}, sharedWith = {}", superset.toString(), user.toString(), sharedWith);
 
         try {
-            SupersetsEntity savedSuperset = exerciseService.createSuperset(supersetsMapper.mapFrom(superset), usersMapper.mapFrom(user), sharedWith);
+            UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
+            if (isNull(user)) {
+                log.error("ExercisesController::createSuperset ERROR : User not found!");
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            log.info("ExercisesController::addSuperset superset = {}, user = {}, sharedWith = {}", superset.toString(), user, sharedWith);
+            SupersetsEntity savedSuperset = exerciseService.createSuperset(supersetsMapper.mapFrom(superset), user, sharedWith);
             log.info("ExercisesController::createSuperset STOP superset = {}", savedSuperset);
             return new ResponseEntity<>(supersetsMapper.mapTo(savedSuperset), HttpStatus.OK);
         } catch (Exception e) {
@@ -284,7 +292,7 @@ public class ExercisesController {
         }
     }
 
-    @DeleteMapping("supersets/superset/")
+    @DeleteMapping("supersets/superset")
     public ResponseEntity<Void> deleteSuperset(@RequestHeader("Authorization") String authorizationHeader,
                                                @RequestBody SupersetsDto supersetsDto) {
         log.info("ExercisesController::deleteSuperset START exerciseDto = {}", supersetsDto);
@@ -302,7 +310,7 @@ public class ExercisesController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PutMapping("supersets/superset/")
+    @PutMapping("supersets/superset")
     public ResponseEntity<SupersetsDto> updateSuperset(@RequestHeader("Authorization") String authorizationHeader,
                                                        @RequestBody SupersetsDto supersetsDto) {
         log.info("ExercisesController::updateSuperset START, supersetDto = {}", supersetsDto);
@@ -319,7 +327,7 @@ public class ExercisesController {
         return new ResponseEntity<>(supersetsMapper.mapTo(supersetEntity), HttpStatus.OK);
     }
 
-    @GetMapping("supersets/rate/{supersetId}/{rate}/")
+    @GetMapping("supersets/rate/{supersetId}/{rate}")
     public ResponseEntity<Void> rateSuperset(@RequestHeader("Authorization") String authorizationHeader,
                                              @PathVariable Long supersetId,
                                              @PathVariable Integer rate) {

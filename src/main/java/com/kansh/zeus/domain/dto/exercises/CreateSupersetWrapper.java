@@ -16,7 +16,5 @@ public class CreateSupersetWrapper {
 
     private SupersetsDto superset;
 
-    private UsersDto user;
-
     private List<String> sharedWith;
 }

@@ -16,7 +16,5 @@ public class CreateExerciseWrapper {
 
     private ExercisesDto exercise;
 
-    private UsersDto user;
-
     private List<String> sharedWith;
 }
