@@ -16,9 +16,9 @@ public class SupersetsDto {
 
     private String name;
 
-    private ExercisesDto exercise1;
+    private Long exercise1;
 
-    private ExercisesDto exercise2;
+    private Long exercise2;
 
     private Float rate;
 

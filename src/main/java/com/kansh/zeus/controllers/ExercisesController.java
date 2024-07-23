@@ -282,6 +282,10 @@ public class ExercisesController {
                 log.error("ExercisesController::createSuperset ERROR : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
+            SupersetsEntity supersetEntity = supersetsMapper.mapFrom(superset);
+            supersetEntity.setCreatedBy(user);
+            supersetEntity.setExercise1(exerciseService.getExerciseByUserAndId(userToken.getId(), superset.getExercise1()).get());
+            supersetEntity.setExercise2(exerciseService.getExerciseByUserAndId(userToken.getId(), superset.getExercise2()).get());
             log.info("ExercisesController::addSuperset superset = {}, user = {}, sharedWith = {}", superset.toString(), user, sharedWith);
             SupersetsEntity savedSuperset = exerciseService.createSuperset(supersetsMapper.mapFrom(superset), user, sharedWith);
             log.info("ExercisesController::createSuperset STOP superset = {}", savedSuperset);
