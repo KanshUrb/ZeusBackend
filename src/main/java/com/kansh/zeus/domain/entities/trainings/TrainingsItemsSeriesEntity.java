@@ -29,6 +29,9 @@ public class TrainingsItemsSeriesEntity {
     private int repetitions;
 
     @Column(nullable = false)
-    private Float weight;
+    private Float weight1;
+
+    @Column(nullable = false)
+    private Float weight2;
 
 }

@@ -13,17 +13,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TrainingItemDto {
-
-    private Long id;
+public class TrainingItemInputDto {
 
     private Integer itemType;
 
     @Builder.Default
-    private ExercisesDto exercise = null;
-
-    @Builder.Default
-    private SupersetsDto superset = null;
+    private Long itemId = null;
 
     private List<SeriesDto> series;
 }

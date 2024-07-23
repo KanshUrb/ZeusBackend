@@ -1,14 +1,19 @@
 package com.kansh.zeus.services.impl;
 
+import com.kansh.zeus.domain.dto.trainings.SeriesDto;
+import com.kansh.zeus.domain.dto.trainings.TrainingItemDto;
+import com.kansh.zeus.domain.dto.trainings.TrainingsDto;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
 import com.kansh.zeus.domain.entities.trainings.TrainingsEntity;
 import com.kansh.zeus.domain.entities.trainings.TrainingsItemsEntity;
+import com.kansh.zeus.domain.entities.trainings.TrainingsItemsSeriesEntity;
 import com.kansh.zeus.domain.entities.trainings.UserTrainingsEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
 import com.kansh.zeus.repositories.exercises.ExerciseRepository;
 import com.kansh.zeus.repositories.exercises.SupersetRepository;
 import com.kansh.zeus.repositories.trainings.TrainingItemRepository;
+import com.kansh.zeus.repositories.trainings.TrainingItemSeriesRepository;
 import com.kansh.zeus.repositories.trainings.TrainingRepository;
 import com.kansh.zeus.repositories.trainings.UserTrainingsRepository;
 import com.kansh.zeus.services.TrainingService;
@@ -16,7 +21,6 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,13 +36,15 @@ public class TrainingServiceImpl implements TrainingService {
     private final UserTrainingsRepository userTrainingsRepository;
     private final ExerciseRepository exerciseRepository;
     private final SupersetRepository supersetRepository;
+    private final TrainingItemSeriesRepository trainingItemSeriesRepository;
 
-    public TrainingServiceImpl(TrainingRepository trainingRepository, UserTrainingsRepository userTrainingsRepository, ExerciseRepository exerciseRepository, SupersetRepository supersetRepository, TrainingItemRepository trainingItemRepository) {
+    public TrainingServiceImpl(TrainingRepository trainingRepository, UserTrainingsRepository userTrainingsRepository, ExerciseRepository exerciseRepository, SupersetRepository supersetRepository, TrainingItemRepository trainingItemRepository, TrainingItemSeriesRepository trainingItemSeriesRepository) {
         this.trainingRepository = trainingRepository;
         this.trainingItemRepository = trainingItemRepository;
         this.userTrainingsRepository = userTrainingsRepository;
         this.exerciseRepository = exerciseRepository;
         this.supersetRepository = supersetRepository;
+        this.trainingItemSeriesRepository = trainingItemSeriesRepository;
     }
 
     @Override
@@ -61,80 +67,122 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @Transactional
-    public TrainingsEntity createTraining(TrainingsEntity training, UsersEntity user, List<Pair<Long, Integer>> exercises, List<String> sharedWith) {
+    public TrainingsDto createTraining(UsersEntity user, String name, String note, List<TrainingItemDto> trainingItems, List<String> sharedWith) {
         log.info("TrainingService::createTraining START");
-        training.setCreatedBy(user);
+        log.info("KURWA {}", trainingItems);
+        TrainingsDto trainingDto = new TrainingsDto();
+
+        TrainingsEntity training = TrainingsEntity.builder()
+                .name(name)
+                .note(note)
+                .createdBy(user)
+                .build();
         TrainingsEntity savedTraining = trainingRepository.save(training);
-        log.debug("KURWA: {}, {}, {}, {}", training, user, exercises, sharedWith);
-        for (Pair<Long, Integer> item : exercises) {
-            List<TrainingsItemsEntity> trainingItems = new ArrayList<>();
+        trainingDto.setId(savedTraining.getId());
+        trainingDto.setName(savedTraining.getName());
+        trainingDto.setNote(savedTraining.getNote());
+
+        List<UserTrainingsEntity> userTrainingsEntities = new ArrayList<>();
+        for (String sharedWithId : sharedWith) {
+            userTrainingsEntities.add(UserTrainingsEntity.builder()
+                    .user(user)
+                    .training(savedTraining)
+                    .sharedWith(UsersEntity.builder().id(sharedWithId).build())
+                    .build());
+        }
+        log.info("userTrainingsEntities: {}", userTrainingsEntities);
+
+        if (!userTrainingsEntities.isEmpty()) {
+            userTrainingsRepository.saveAll(userTrainingsEntities);
+        }
+        List<TrainingItemDto> trainingItemsOutput = new ArrayList<>();
+        for (TrainingItemDto trainingItem : trainingItems) {
             TrainingsItemsEntity trainingItemsEntity = new TrainingsItemsEntity();
             Optional<ExercisesEntity> exercise;
             Optional<SupersetsEntity> superset;
 
-            if (item.getSecond() == 1) { //exercise
-                log.debug("POJEBIE MNIE");
-                exercise = exerciseRepository.findExerciseByUserAndId(user.getId(), item.getFirst());
-                log.debug(exercise.toString());
+            if (trainingItem.getItemType() == 1) {
+                exercise = exerciseRepository.findExerciseByUserAndId(user.getId(), trainingItem.getExercise().getId());
                 if (exercise.isPresent()) {
                     trainingItemsEntity.setTraining(savedTraining);
                     trainingItemsEntity.setExercise(exercise.get());
                     trainingItemsEntity.setSuperset(null);
                     trainingItemsEntity.setItemType(1);
-                    trainingItems.add(trainingItemsEntity);
+                    trainingItemsEntity = trainingItemRepository.save(trainingItemsEntity);
+
+                    int i = 0;
+                    List<SeriesDto> seriesDto = new ArrayList<>();
+                    for (SeriesDto series : trainingItem.getSeries()) {
+                        TrainingsItemsSeriesEntity trainingItemsSeriesEntity = TrainingsItemsSeriesEntity.builder()
+                                .trainingItem(trainingItemsEntity)
+                                .seriesNumber(i)
+                                .repetitions(series.getRepetitions())
+                                .weight1(series.getWeight1())
+                                .weight2(series.getWeight2())
+                                .build();
+                        trainingItemsSeriesEntity = trainingItemSeriesRepository.save(trainingItemsSeriesEntity);
+                        seriesDto.add(SeriesDto.builder()
+                                .id(trainingItemsSeriesEntity.getId())
+                                .repetitions(trainingItemsSeriesEntity.getRepetitions())
+                                .weight1(trainingItemsSeriesEntity.getWeight1())
+                                .weight2(trainingItemsSeriesEntity.getWeight2())
+                                .build());
+                        i++;
+                    }
+
+                    trainingItemsOutput.add(TrainingItemDto.builder()
+                            .id(trainingItemsEntity.getId())
+                            .itemType(1)
+                            .exercise(trainingItem.getExercise())
+                            .series(seriesDto)
+                            .build());
                 }
             }
-            if (item.getSecond() == 2) {
-                superset = supersetRepository.findSupersetByUserAndId(user.getId(), item.getFirst());
+            if (trainingItem.getItemType() == 2) {
+                superset = supersetRepository.findSupersetByUserAndId(user.getId(), trainingItem.getSuperset().getId());
                 if (superset.isPresent()) {
                     trainingItemsEntity.setTraining(savedTraining);
                     trainingItemsEntity.setExercise(null);
                     trainingItemsEntity.setSuperset(superset.get());
                     trainingItemsEntity.setItemType(2);
-                    trainingItems.add(trainingItemsEntity);
+                    trainingItemsEntity = trainingItemRepository.save(trainingItemsEntity);
+
+                    int i = 0;
+                    List<SeriesDto> seriesDto = new ArrayList<>();
+                    for (SeriesDto series : trainingItem.getSeries()) {
+                        TrainingsItemsSeriesEntity trainingItemsSeriesEntity = TrainingsItemsSeriesEntity.builder()
+                                .trainingItem(trainingItemsEntity)
+                                .seriesNumber(i)
+                                .repetitions(series.getRepetitions())
+                                .weight1(series.getWeight1())
+                                .weight2(series.getWeight2())
+                                .build();
+                        trainingItemsSeriesEntity = trainingItemSeriesRepository.save(trainingItemsSeriesEntity);
+                        seriesDto.add(SeriesDto.builder()
+                                .id(trainingItemsSeriesEntity.getId())
+                                .repetitions(trainingItemsSeriesEntity.getRepetitions())
+                                .weight1(trainingItemsSeriesEntity.getWeight1())
+                                .weight2(trainingItemsSeriesEntity.getWeight2())
+                                .build());
+                        i++;
+                    }
+
+
+                    trainingItemsOutput.add(TrainingItemDto.builder()
+                            .id(trainingItemsEntity.getId())
+                            .itemType(2)
+                            .superset(trainingItem.getSuperset())
+                            .series(seriesDto)
+                            .build());
                 }
             }
-            log.info("JAPIERDOLE: {}", trainingItemsEntity);
-            trainingItemRepository.save(trainingItemsEntity);
-            log.info("trainingItemRepository: {}", trainingItemsEntity);
-        }
 
-        List<UserTrainingsEntity> userTrainingsEntities = new ArrayList<>();
-        for (String sharedWithId : sharedWith) {
-            UserTrainingsEntity userTrainingsEntity = UserTrainingsEntity.builder()
-                    .user(user)
-                    .training(savedTraining)
-                    .sharedWith(UsersEntity.builder().id(sharedWithId).build())
-                    .build();
-            userTrainingsEntities.add(userTrainingsEntity);
         }
-        log.info("userTrainingsEntities: {}", userTrainingsEntities);
+        trainingDto.setTrainingItems(trainingItemsOutput);
 
-        if (!userTrainingsEntities.isEmpty()) {
-           userTrainingsRepository.saveAll(userTrainingsEntities);
-        }
+        log.info("trainingDto: {}", trainingDto);
         log.info("TrainingService::createTraining STOP");
-        return savedTraining;
+        return trainingDto;
     }
 
- /*   Training:
-        - id
-        - name,
-        - note,
-        - created_by
-
-    Trainings_items:
-        - id (unique_id)
-        - training_id (FK)
-        - item-type (exercise/superset)
-        - exercise_id
-        - superset_id
-
-    Training-items-series
-        - unique id
-        - id do training_items
-
-    Create Training ->
-    Insert Training, List Training_items, List to List training item_serues
-*/
 }

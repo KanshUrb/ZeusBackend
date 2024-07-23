@@ -5,21 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TrainingsDto {
+public class SeriesDto {
 
     private Long id;
 
-    private String name;
+    private Integer repetitions;
 
-    private String note;
+    private Float weight1;
 
-    private List<TrainingItemDto> trainingItems;
-
+    @Builder.Default
+    private Float weight2 = 0.0F;
 }
-
