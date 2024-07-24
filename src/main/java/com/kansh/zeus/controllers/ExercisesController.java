@@ -186,10 +186,22 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        ExercisesEntity exercisesEntity = exerciseService.updateExercise(exercisesMapper.mapFrom(exercisesDto));
-        log.info("ExercisesController::updateExercise STOP, exerciseEntity = {}", exercisesEntity.toString());
+        ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercisesDto);
+        exercisesEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
+        ExercisesEntity savedExercise = exerciseService.updateExercise(exercisesMapper.mapFrom(exercisesDto));
 
-        return new ResponseEntity<>(exercisesMapper.mapTo(exercisesEntity), HttpStatus.OK);
+        ExercisesDto output = ExercisesDto.builder()
+                .id(savedExercise.getId())
+                .name(savedExercise.getName())
+                .description(savedExercise.getDescription())
+                .muscleGroup(savedExercise.getMuscleGroup())
+                .difficultyLevel(savedExercise.getDifficultyLevel())
+                .videoUrl(savedExercise.getVideoUrl())
+                .rate(savedExercise.getRate())
+                .build();
+        log.info("ExercisesController::updateExercise STOP, exerciseEntity = {}", output.toString());
+
+        return new ResponseEntity<>(output, HttpStatus.OK);
     }
 
     @GetMapping("exercises/rate/{exerciseId}/{rate}")
