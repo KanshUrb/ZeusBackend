@@ -361,11 +361,12 @@ public class ExercisesController {
             log.error("ExercisesController::updateSuperset ERROR : Invalid authorization header!");
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+        SupersetsEntity supersetsEntity = supersetsMapper.mapFrom(supersetsDto);
+        supersetsEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
+        SupersetsEntity savedSupersetEntity = exerciseService.updateSuperset(supersetsEntity);
+        log.info("ExercisesController::updateSuperset STOP, exerciseEntity = {}", savedSupersetEntity.toString());
 
-        SupersetsEntity supersetEntity = exerciseService.updateSuperset(supersetsMapper.mapFrom(supersetsDto));
-        log.info("ExercisesController::updateSuperset STOP, exerciseEntity = {}", supersetEntity.toString());
-
-        return new ResponseEntity<>(supersetsMapper.mapTo(supersetEntity), HttpStatus.OK);
+        return new ResponseEntity<>(supersetsMapper.mapTo(savedSupersetEntity), HttpStatus.OK);
     }
 
     @GetMapping("supersets/rate/{supersetId}/{rate}")
