@@ -118,7 +118,7 @@ public class ExercisesController {
 
     @PostMapping("exercises/exercise")
     public ResponseEntity<ExercisesDto> createExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody CreateExercisrc/main/java/com/kansh/zeus/controllers/ExercisesController.javaseWrapper wrapper) {
+                                                       @RequestBody CreateExerciseWrapper wrapper) {
         log.info("ExercisesController::createExercise START");
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -180,8 +180,8 @@ public class ExercisesController {
 
     @PutMapping("exercises/exercise")
     public ResponseEntity<ExercisesDto> updateExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody ExercisesDto exercisesDto) {
-        log.info("ExercisesController::updateExercise START, exerciseDto = {}", exercisesDto);
+                                                       @RequestBody CreateExerciseWrapper createExerciseWrapper) {
+        log.info("ExercisesController::updateExercise START, exerciseDto = {}", createExerciseWrapper.getExercise());
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
@@ -189,9 +189,9 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercisesDto);
+        ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(createExerciseWrapper.getExercise());
         //exercisesEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
-        ExercisesEntity savedExercise = exerciseService.updateExercise(exercisesMapper.mapFrom(exercisesDto));
+        ExercisesEntity savedExercise = exerciseService.updateExercise(exercisesMapper.mapFrom(createExerciseWrapper.getExercise()));
 
         ExercisesDto output = ExercisesDto.builder()
                 .id(savedExercise.getId())
