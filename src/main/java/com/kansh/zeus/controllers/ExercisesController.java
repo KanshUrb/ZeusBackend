@@ -254,7 +254,15 @@ public class ExercisesController {
         if (superset.isPresent()) {
             SupersetsEntity supersetEntity = superset.get();
             log.info("ExercisesController::getSupersetByUserAndId STOP exercise = {}", supersetEntity);
-            return new ResponseEntity<>(supersetsMapper.mapTo(supersetEntity), HttpStatus.OK);
+            SupersetsDto output = SupersetsDto.builder()
+                    .id(supersetEntity.getId())
+                    .name(supersetEntity.getName())
+                    .exercise1(supersetEntity.getExercise1().getId())
+                    .exercise2(supersetEntity.getExercise2().getId())
+                    .rate(supersetEntity.getRate())
+                    .userCounter(supersetEntity.getUserCounter())
+                    .build();
+            return new ResponseEntity<>(output, HttpStatus.OK);
         } else {
             log.info("ExercisesController::getSupersetByUserAndId ERROR Exercise not found");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
