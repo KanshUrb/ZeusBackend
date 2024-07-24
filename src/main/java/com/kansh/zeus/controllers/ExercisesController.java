@@ -187,7 +187,7 @@ public class ExercisesController {
         }
 
         ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercisesDto);
-        exercisesEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
+        //exercisesEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
         ExercisesEntity savedExercise = exerciseService.updateExercise(exercisesMapper.mapFrom(exercisesDto));
 
         ExercisesDto output = ExercisesDto.builder()
