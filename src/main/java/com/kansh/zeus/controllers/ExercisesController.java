@@ -118,7 +118,7 @@ public class ExercisesController {
 
     @PostMapping("exercises/exercise")
     public ResponseEntity<ExercisesDto> createExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody CreateExerciseWrapper wrapper) {
+                                                       @RequestBody CreateExercisrc/main/java/com/kansh/zeus/controllers/ExercisesController.javaseWrapper wrapper) {
         log.info("ExercisesController::createExercise START");
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -137,7 +137,10 @@ public class ExercisesController {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             log.info("ExercisesController::addExercise exercise = {}, user = {}, sharedWith = {}", exercise.toString(), user, sharedWith);
-            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesMapper.mapFrom(exercise), user, sharedWith);
+            ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercise);
+            exercisesEntity.setId(null);
+            exercisesEntity.setCreatedBy(user);
+            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesEntity, user, sharedWith);
             log.info("ExercisesController::createExercise STOP exercise = {}", savedExercise);
             return new ResponseEntity<>(exercisesMapper.mapTo(savedExercise), HttpStatus.OK);
         } catch (Exception e) {
