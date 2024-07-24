@@ -165,13 +165,14 @@ public class ExercisesController {
             }
             exerciseService.deleteExercise(exerciseId, user.getId());
 
+            log.info("ExercisesController::deleteExercise STOP");
+            return new ResponseEntity<>(HttpStatus.OK);
+
         } catch (Exception e) {
             log.error("ExercisesController::deleteExercise ERROR error = {}", e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        log.info("ExercisesController::deleteExercise STOP");
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("exercises/exercise")
@@ -324,7 +325,7 @@ public class ExercisesController {
 
     @DeleteMapping("supersets/superset/{supersetId}")
     public ResponseEntity<Void> deleteSuperset(@RequestHeader("Authorization") String authorizationHeader,
-                                               @RequestParam Long supersetId) {
+                                               @PathVariable Long supersetId) {
         log.info("ExercisesController::deleteSuperset START supersetId = {}", supersetId);
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
