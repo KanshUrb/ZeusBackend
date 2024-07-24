@@ -141,6 +141,14 @@ public class ExerciseServiceIntegrationTests {
         ExercisesEntity createdExercise1 = exercisesService.createExercise(userExercise1, user1, Collections.emptyList());
         assertNotNull(createdExercise1);
 
+        ExercisesEntity exercise = ExercisesEntity.builder()
+                .id(0L)
+                .name("Exercise")
+                .build();
+        ExercisesEntity createdExercise = exercisesService.createExercise(exercise, user1, Collections.emptyList());
+        log.info("KURWA");
+        log.info(createdExercise.toString());
+
         resultUser1 = exercisesService.getExercisesSummariesAvailableForUser(user1.getId(), PageRequest.of(0, 10));
         assertEquals(4, resultUser1.getTotalElements());
 
@@ -175,6 +183,7 @@ public class ExerciseServiceIntegrationTests {
 
         // Scenario: User1 creates a superset visible only to him
         SupersetsEntity userSuperset1 = SupersetsEntity.builder()
+                .id(0L)
                 .name("User1's Superset")
                 .exercise1(exercise1)
                 .exercise2(exercise2)
@@ -182,6 +191,8 @@ public class ExerciseServiceIntegrationTests {
                 .build();
 
         SupersetsEntity createdSuperset1 = exercisesService.createSuperset(userSuperset1, user1, Collections.emptyList());
+        log.info("KURWA");
+        log.info(createdSuperset1.toString());
         assertNotNull(createdSuperset1);
 
         resultUser1 = exercisesService.getSupersetsSummariesAvailableForUser(user1.getId(), PageRequest.of(0, 10));

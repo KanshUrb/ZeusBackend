@@ -1,8 +1,8 @@
 package com.kansh.zeus.services.impl;
 
-import com.kansh.zeus.domain.dto.trainings.SeriesDto;
-import com.kansh.zeus.domain.dto.trainings.TrainingItemDto;
-import com.kansh.zeus.domain.dto.trainings.TrainingsDto;
+import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetsDto;
+import com.kansh.zeus.domain.dto.trainings.*;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
 import com.kansh.zeus.domain.entities.trainings.TrainingsEntity;
@@ -21,11 +21,14 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.Objects.isNull;
 
 @Slf4j
 @Service
@@ -48,28 +51,82 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
-    public Page<Object[]> getTrainingsSummariesAvailableForUser(String userId, Pageable pageable) {
-        return trainingRepository.findAllTrainingSummariesAvailableForUser(userId, pageable);
+    public List<TrainingSummaryDto> getTrainingsSummariesAvailableForUser(String userId, Pageable pageable) {
+        List<TrainingsEntity> trainingEntities = trainingRepository.findAllTrainingSummariesAvailableForUser(userId, pageable);
+        List<TrainingSummaryDto> trainingSummaries = new ArrayList<>();
+        for(TrainingsEntity trainingEntity : trainingEntities) {
+            trainingSummaries.add(TrainingSummaryDto.builder()
+                    .id(trainingEntity.getId())
+                    .name(trainingEntity.getName())
+                    .note(trainingEntity.getNote())
+                    .build());
+        }
+        return trainingSummaries;
     }
 
     @Override
-    public Optional<TrainingsEntity> getTrainingByUserAndId(String userId, Long id) {
-        return trainingRepository.findTrainingByUserAndId(userId, id);
-    }
+    public Optional<TrainingsDto> getTrainingById(String userId, Long id) {
+        log.info("TrainingService::getTrainingById START userId = {}, id = {}", userId, id);
+        Optional<TrainingsEntity> training = trainingRepository.findTrainingByUserAndId(userId, id);
+        if (training.isEmpty()) {
+            return Optional.empty();
+        }
+        TrainingsDto trainingDto = new TrainingsDto();
+        trainingDto.setId(training.get().getId());
+        trainingDto.setName(training.get().getName());
+        trainingDto.setNote(training.get().getNote());
 
-    @Override
-    public List<TrainingsItemsEntity> getTrainingItemsByTrainingId(Long trainingId) {
-        return trainingItemRepository.findByTrainingId(trainingId);
+        List<TrainingItemDto> trainingItems = new ArrayList<>();
+        List<TrainingsItemsEntity> trainingItemsEntity = trainingRepository.findTrainingItemsByTrainingId(id);
+        log.info(trainingItemsEntity.toString());
+        for(TrainingsItemsEntity trainingItemEntity : trainingItemsEntity) {
+            List<TrainingsItemsSeriesEntity> trainingItemsSeriesEntity = trainingRepository.findTrainingItemsSeriesByTrainingItemsId(trainingItemEntity.getId());
+            List<SeriesDto> series = new ArrayList<>();
+            for(TrainingsItemsSeriesEntity trainingItemsSeries : trainingItemsSeriesEntity) {
+                series.add(SeriesDto.builder()
+                        .id(trainingItemsSeries.getId())
+                        .repetitions(trainingItemsSeries.getRepetitions())
+                        .weight1(trainingItemsSeries.getWeight1())
+                        .weight2(trainingItemsSeries.getWeight2())
+                        .build());
+            }
+            if(!isNull(trainingItemEntity.getExercise())) {
+                log.info(trainingItemEntity.getExercise().toString());
+            }
+            log.info(trainingItemEntity.toString());
+            log.info(trainingItemEntity.toString());
+            TrainingItemDto trainingItem = TrainingItemDto.builder()
+                    .id(trainingItemEntity.getId())
+                    .itemType(trainingItemEntity.getItemType())
+                    .exercise(!isNull(trainingItemEntity.getExercise()) ? ExercisesDto.builder()
+                            .id(trainingItemEntity.getExercise().getId())
+                            .name(trainingItemEntity.getExercise().getName())
+                            .description(trainingItemEntity.getExercise().getDescription())
+                            .muscleGroup(trainingItemEntity.getExercise().getMuscleGroup())
+                            .difficultyLevel(trainingItemEntity.getExercise().getDifficultyLevel())
+                            .videoUrl(trainingItemEntity.getExercise().getVideoUrl())
+                            .rate(trainingItemEntity.getExercise().getRate())
+                            .build() : null)
+                    .superset(!isNull(trainingItemEntity.getSuperset()) ? SupersetsDto.builder()
+                            .id(trainingItemEntity.getSuperset().getId())
+                            .name(trainingItemEntity.getSuperset().getName())
+                            .exercise1(trainingItemEntity.getSuperset().getExercise1().getId())
+                            .exercise2(trainingItemEntity.getSuperset().getExercise2().getId())
+                            .rate(trainingItemEntity.getSuperset().getRate())
+                            .build() : null)
+                    .series(series)
+                    .build();
+            trainingItems.add(trainingItem);
+        }
+        trainingDto.setTrainingItems(trainingItems);
+        log.info("TrainingService::getTrainingById STOP, trainingDto = {}", trainingDto);
+        return Optional.of(trainingDto);
     }
-
-    //Uzytkownik na kliencie dodaje rzeczy do treningu itp, do serwera wysle
-    // zakonczony trening w formie jakiegos jsona czy cos
 
     @Override
     @Transactional
     public TrainingsDto createTraining(UsersEntity user, String name, String note, List<TrainingItemDto> trainingItems, List<String> sharedWith) {
         log.info("TrainingService::createTraining START");
-        log.info("KURWA {}", trainingItems);
         TrainingsDto trainingDto = new TrainingsDto();
 
         TrainingsEntity training = TrainingsEntity.builder()
@@ -183,6 +240,14 @@ public class TrainingServiceImpl implements TrainingService {
         log.info("trainingDto: {}", trainingDto);
         log.info("TrainingService::createTraining STOP");
         return trainingDto;
+    }
+
+    @Override
+    @Transactional
+    public void deleteTraining(Long trainingId, String userId) {
+        log.info("TrainingService::deleteTraining START trainingId = {}, userId = {}", trainingId, userId);
+        trainingRepository.deleteByIdAndCreatedBy_Id(trainingId, userId);
+        log.info("TrainingService::deleteTraining STOP");
     }
 
 }

@@ -1,6 +1,7 @@
 package com.kansh.zeus.services;
 
 import com.kansh.zeus.domain.dto.trainings.TrainingItemDto;
+import com.kansh.zeus.domain.dto.trainings.TrainingSummaryDto;
 import com.kansh.zeus.domain.dto.trainings.TrainingsDto;
 import com.kansh.zeus.domain.entities.trainings.TrainingsEntity;
 import com.kansh.zeus.domain.entities.trainings.TrainingsItemsEntity;
@@ -13,12 +14,12 @@ import java.util.Optional;
 
 public interface TrainingService {
 
-    Page<Object[]> getTrainingsSummariesAvailableForUser(String userId, Pageable pageable);
+    List<TrainingSummaryDto> getTrainingsSummariesAvailableForUser(String userId, Pageable pageable);
 
-    Optional<TrainingsEntity> getTrainingByUserAndId(String userId, Long id);
+    Optional<TrainingsDto> getTrainingById(String userId, Long id);
 
     TrainingsDto createTraining(UsersEntity user, String name, String note, List<TrainingItemDto> trainingItems, List<String> sharedWith);
 
-    List<TrainingsItemsEntity> getTrainingItemsByTrainingId(Long trainingId);
+    void deleteTraining(Long trainingId, String userId);
 
 }
