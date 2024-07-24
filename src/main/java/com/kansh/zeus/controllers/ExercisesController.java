@@ -363,10 +363,19 @@ public class ExercisesController {
         }
         SupersetsEntity supersetsEntity = supersetsMapper.mapFrom(supersetsDto);
         supersetsEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
-        SupersetsEntity savedSupersetEntity = exerciseService.updateSuperset(supersetsEntity);
-        log.info("ExercisesController::updateSuperset STOP, exerciseEntity = {}", savedSupersetEntity.toString());
+        SupersetsEntity savedSuperset = exerciseService.updateSuperset(supersetsEntity);
 
-        return new ResponseEntity<>(supersetsMapper.mapTo(savedSupersetEntity), HttpStatus.OK);
+        SupersetsDto output = SupersetsDto.builder()
+                .id(savedSuperset.getId())
+                .name(savedSuperset.getName())
+                .exercise1(savedSuperset.getExercise1().getId())
+                .exercise2(savedSuperset.getExercise2().getId())
+                .rate(savedSuperset.getRate())
+                .userCounter(savedSuperset.getUserCounter())
+                .build();
+        log.info("ExercisesController::updateSuperset STOP, exerciseEntity = {}", output.toString());
+
+        return new ResponseEntity<>(output, HttpStatus.OK);
     }
 
     @GetMapping("supersets/rate/{supersetId}/{rate}")
