@@ -189,9 +189,16 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(createExerciseWrapper.getExercise());
+        ExercisesEntity exercisesEntity = ExercisesEntity.builder()
+                .id(createExerciseWrapper.getExercise().getId())
+                .name(createExerciseWrapper.getExercise().getName())
+                .description(createExerciseWrapper.getExercise().getDescription())
+                .muscleGroup(createExerciseWrapper.getExercise().getMuscleGroup())
+                .difficultyLevel(createExerciseWrapper.getExercise().getDifficultyLevel())
+                .videoUrl(createExerciseWrapper.getExercise().getVideoUrl())
+                .build();
         //exercisesEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
-        ExercisesEntity savedExercise = exerciseService.updateExercise(exercisesMapper.mapFrom(createExerciseWrapper.getExercise()));
+        ExercisesEntity savedExercise = exerciseService.updateExercise(exercisesEntity);
 
         ExercisesDto output = ExercisesDto.builder()
                 .id(savedExercise.getId())
