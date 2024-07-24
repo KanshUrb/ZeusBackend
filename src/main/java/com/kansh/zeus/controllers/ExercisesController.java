@@ -146,10 +146,10 @@ public class ExercisesController {
         }
     }
 
-    @DeleteMapping("exercises/exercise")
+    @DeleteMapping("exercises/exercise/{exerciseId}")
     public ResponseEntity<Void> deleteExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                               @RequestBody ExercisesDto exercisesDto) {
-        log.info("ExercisesController::deleteExercise START exerciseDto = {}", exercisesDto);
+                                               @PathVariable Long exerciseId) {
+        log.info("ExercisesController::deleteExercise START exerciseId = {}", exerciseId);
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
@@ -157,8 +157,18 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercisesDto);
-        exerciseService.deleteExercise(exercisesEntity.getId(), exercisesEntity.getCreatedBy().getId());
+        try {
+            UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
+            if (isNull(user)) {
+                log.error("ExercisesController::createSuperset ERROR : User not found!");
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            exerciseService.deleteExercise(exerciseId, user.getId());
+
+        } catch (Exception e) {
+            log.error("ExercisesController::deleteExercise ERROR error = {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         log.info("ExercisesController::deleteExercise STOP");
         return new ResponseEntity<>(HttpStatus.OK);
@@ -312,10 +322,10 @@ public class ExercisesController {
         }
     }
 
-    @DeleteMapping("supersets/superset")
+    @DeleteMapping("supersets/superset/{supersetId}")
     public ResponseEntity<Void> deleteSuperset(@RequestHeader("Authorization") String authorizationHeader,
-                                               @RequestBody SupersetsDto supersetsDto) {
-        log.info("ExercisesController::deleteSuperset START exerciseDto = {}", supersetsDto);
+                                               @RequestParam Long supersetId) {
+        log.info("ExercisesController::deleteSuperset START supersetId = {}", supersetId);
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
@@ -323,8 +333,18 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        SupersetsEntity supersetEntity = supersetsMapper.mapFrom(supersetsDto);
-        exerciseService.deleteSuperset(supersetEntity.getId(), supersetEntity.getCreatedBy().getId());
+        try {
+            UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
+            if (isNull(user)) {
+                log.error("ExercisesController::createSuperset ERROR : User not found!");
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
+            exerciseService.deleteSuperset(supersetId, user.getId());
+        } catch (Exception e) {
+            log.error("ExercisesController::deleteSuperset ERROR error = {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         log.info("ExercisesController::deleteSuperset STOP");
         return new ResponseEntity<>(HttpStatus.OK);
