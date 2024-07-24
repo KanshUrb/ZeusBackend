@@ -193,7 +193,7 @@ public class ExercisesController {
     }
 
     @GetMapping("exercises/rate/{exerciseId}/{rate}")
-    public ResponseEntity<Void> rateExercise(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<Float> rateExercise(@RequestHeader("Authorization") String authorizationHeader,
                                                      @PathVariable Long exerciseId,
                                                      @PathVariable Integer rate) {
         log.info("ExercisesController::rateExercise START, exerciseId = {}, rate = {}", exerciseId, rate);
@@ -204,9 +204,9 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        exerciseService.rateExercise(exerciseId, rate);
+        Float exerciseNewRate = exerciseService.rateExercise(exerciseId, rate);
         log.info("ExercisesController::rateExercise STOP");
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(exerciseNewRate, HttpStatus.OK);
     }
 
     @GetMapping("/supersets/summaries")
@@ -379,7 +379,7 @@ public class ExercisesController {
     }
 
     @GetMapping("supersets/rate/{supersetId}/{rate}")
-    public ResponseEntity<Void> rateSuperset(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<Float> rateSuperset(@RequestHeader("Authorization") String authorizationHeader,
                                              @PathVariable Long supersetId,
                                              @PathVariable Integer rate) {
         log.info("ExercisesController::rateSuperset START, supersetId = {}, rate = {}", supersetId, rate);
@@ -390,9 +390,9 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        exerciseService.rateSuperset(supersetId, rate);
+        Float supersetNewRate = exerciseService.rateSuperset(supersetId, rate);
         log.info("ExercisesController::rateSuperset STOP");
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(supersetNewRate, HttpStatus.OK);
     }
 
 }

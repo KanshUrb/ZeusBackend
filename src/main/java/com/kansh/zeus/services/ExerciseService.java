@@ -31,9 +31,9 @@ public interface ExerciseService {
 
     SupersetsEntity updateSuperset(SupersetsEntity supersetsEntity);
 
-    void rateExercise(Long exerciseId, Integer rate);
+    Float rateExercise(Long exerciseId, Integer rate);
 
-    void rateSuperset(Long supersetId, Integer rate);
+    Float rateSuperset(Long supersetId, Integer rate);
 
     ExercisesEntity addExerciseTechnical(ExercisesEntity exercisesEntity);
 

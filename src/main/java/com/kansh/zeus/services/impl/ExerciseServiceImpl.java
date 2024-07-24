@@ -87,19 +87,23 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public void rateExercise(Long exerciseId, Integer rate) {
+    public Float rateExercise(Long exerciseId, Integer rate) {
         log.info("ExerciseService::rateExercise START exerciseId = {}, rate = {}", exerciseId, rate);
 
+        Float newRate;
         Optional<ExercisesEntity> exercise = exerciseRepository.findById(exerciseId);
-        exercise.ifPresent(exerciseEntity -> {
-            log.info("Exercise = {}", exerciseEntity);
-            Float newRate = calcRate(exerciseEntity.getRate(), exerciseEntity.getUserCounter(), rate);
-            exerciseEntity.setRate(newRate);
-            exerciseEntity.setUserCounter(exerciseEntity.getUserCounter() + 1);
-            exerciseRepository.save(exerciseEntity);
-        });
+        if (exercise.isPresent()) {
+            log.info("Exercise = {}", exercise.get());
+            newRate = calcRate(exercise.get().getRate(), exercise.get().getUserCounter(), rate);
+            exercise.get().setRate(newRate);
+            exercise.get().setUserCounter(exercise.get().getUserCounter() + 1);
+            exerciseRepository.save(exercise.get());
+        } else {
+            throw new RuntimeException("Exercise not found");
+        }
 
-        log.info("ExerciseService::rateExercise STOP");
+        log.info("ExerciseService::rateExercise STOP, new rate = {}", newRate);
+        return newRate;
     }
 
     @Override
@@ -153,19 +157,23 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public void rateSuperset(Long supersetId, Integer rate) {
+    public Float rateSuperset(Long supersetId, Integer rate) {
         log.info("ExerciseService::rateSuperset START supersetId = {}, rate = {}", supersetId, rate);
 
+        Float newRate;
         Optional<SupersetsEntity> superset = supersetRepository.findById(supersetId);
-        superset.ifPresent(supersetEntity -> {
-            log.info("Superset = {}", supersetEntity);
-            Float newRate = calcRate(supersetEntity.getRate(), supersetEntity.getUserCounter(), rate);
-            supersetEntity.setRate(newRate);
-            supersetEntity.setUserCounter(supersetEntity.getUserCounter() + 1);
-            supersetRepository.save(supersetEntity);
-        });
+        if (superset.isPresent()) {
+            log.info("Superset = {}", superset.get());
+            newRate = calcRate(superset.get().getRate(), superset.get().getUserCounter(), rate);
+            superset.get().setRate(newRate);
+            superset.get().setUserCounter(superset.get().getUserCounter() + 1);
+            supersetRepository.save(superset.get());
+        } else {
+            throw new RuntimeException("Superset not found");
+        }
 
-        log.info("ExerciseService::rateSuperset STOP");
+        log.info("ExerciseService::rateSuperset STOP, new rate = {}", newRate);
+        return newRate;
     }
 
     private Float calcRate(Float currentRate, Integer userCounter, Integer rate) {
