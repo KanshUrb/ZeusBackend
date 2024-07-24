@@ -137,7 +137,10 @@ public class ExercisesController {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             log.info("ExercisesController::addExercise exercise = {}, user = {}, sharedWith = {}", exercise.toString(), user, sharedWith);
-            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesMapper.mapFrom(exercise), user, sharedWith);
+            ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercise);
+            exercisesEntity.setId(null);
+            exercisesEntity.setCreatedBy(user);
+            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesEntity, user, sharedWith);
             log.info("ExercisesController::createExercise STOP exercise = {}", savedExercise);
             return new ResponseEntity<>(exercisesMapper.mapTo(savedExercise), HttpStatus.OK);
         } catch (Exception e) {
@@ -283,11 +286,12 @@ public class ExercisesController {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             SupersetsEntity supersetEntity = supersetsMapper.mapFrom(superset);
+            supersetEntity.setId(null);
             supersetEntity.setCreatedBy(user);
             supersetEntity.setExercise1(exerciseService.getExerciseByUserAndId(userToken.getId(), superset.getExercise1()).get());
             supersetEntity.setExercise2(exerciseService.getExerciseByUserAndId(userToken.getId(), superset.getExercise2()).get());
             log.info("ExercisesController::addSuperset superset = {}, user = {}, sharedWith = {}", superset.toString(), user, sharedWith);
-            SupersetsEntity savedSuperset = exerciseService.createSuperset(supersetsMapper.mapFrom(superset), user, sharedWith);
+            SupersetsEntity savedSuperset = exerciseService.createSuperset(supersetEntity, user, sharedWith);
             log.info("ExercisesController::createSuperset STOP superset = {}", savedSuperset);
             return new ResponseEntity<>(supersetsMapper.mapTo(savedSuperset), HttpStatus.OK);
         } catch (Exception e) {
