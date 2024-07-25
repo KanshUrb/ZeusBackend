@@ -51,8 +51,8 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Override
-    public List<TrainingSummaryDto> getTrainingsSummariesAvailableForUser(String userId, Pageable pageable) {
-        List<TrainingsEntity> trainingEntities = trainingRepository.findAllTrainingSummariesAvailableForUser(userId, pageable);
+    public List<TrainingSummaryDto> getTrainingsSummariesAvailableForUser(String userId) {
+        List<TrainingsEntity> trainingEntities = trainingRepository.findAllTrainingSummariesAvailableForUser(userId);
         List<TrainingSummaryDto> trainingSummaries = new ArrayList<>();
         for(TrainingsEntity trainingEntity : trainingEntities) {
             trainingSummaries.add(TrainingSummaryDto.builder()

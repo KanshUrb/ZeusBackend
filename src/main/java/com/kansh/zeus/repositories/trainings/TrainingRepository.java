@@ -24,7 +24,7 @@ public interface TrainingRepository extends JpaRepository<TrainingsEntity, Long>
             + "   OR t.createdBy.id = :userId "
             + "   OR ut.sharedWith.id = :userId "
             + "GROUP BY t.id ")
-    List<TrainingsEntity> findAllTrainingSummariesAvailableForUser(@Param("userId") String userId, Pageable pageable);
+    List<TrainingsEntity> findAllTrainingSummariesAvailableForUser(@Param("userId") String userId);
 
     @Query(value = "SELECT t "
                  + "FROM TrainingsEntity t "

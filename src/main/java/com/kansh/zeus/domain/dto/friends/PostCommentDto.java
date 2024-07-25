@@ -15,9 +15,9 @@ public class PostCommentDto {
 
     private Long id;
 
-    private Long postId;
+    private String authorFirstName;
 
-    private String userId;
+    private String authorLastName;
 
     private String comment;
 

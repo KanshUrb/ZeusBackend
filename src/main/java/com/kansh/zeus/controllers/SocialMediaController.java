@@ -54,9 +54,9 @@ public class SocialMediaController {
         this.userRepository = userRepository;
     }
 
-    @PostMapping("/friends")
-    public ResponseEntity<Void> addFriend(@RequestHeader("Authorization") String authorizationHeader,
-                                          @RequestParam String friendHash) {
+    @PostMapping("/friends/{friendHash}")
+    public ResponseEntity<FriendDto> addFriend(@RequestHeader("Authorization") String authorizationHeader,
+                                               @PathVariable String friendHash) {
         log.info("SocialMediaController::addFriend START friendHash = {}", friendHash);
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -66,9 +66,19 @@ public class SocialMediaController {
         }
 
         try {
-            socialMediaService.addFriend(userToken.getId(), friendHash);
-            log.info("SocialMediaController::addFriend STOP");
-            return new ResponseEntity<>(HttpStatus.OK);
+            FriendEntity addedFriend = socialMediaService.addFriend(userToken.getId(), friendHash);
+            UsersEntity friendEntity = userRepository.findByHash(friendHash).orElse(null);
+            if (isNull(friendEntity)) {
+                log.error("SocialMediaController::addFriend ERROR: User (friend) not found!");
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            FriendDto addedFriendDto = FriendDto.builder()
+                    .hash(friendEntity.getHash())
+                    .firstName(friendEntity.getFirstName())
+                    .lastName(friendEntity.getLastName())
+                    .build();
+            log.info("SocialMediaController::addFriend STOP addedFriend = {}", addedFriend);
+            return new ResponseEntity<>(addedFriendDto, HttpStatus.OK);
         } catch (Exception e) {
             log.error("SocialMediaController::addFriend ERROR", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -96,7 +106,7 @@ public class SocialMediaController {
         }
     }
 
-    @GetMapping("/friends/")
+    @GetMapping("/friends")
     public ResponseEntity<List<FriendDto>> getFriends(@RequestHeader("Authorization") String authorizationHeader) {
         log.info("SocialMediaController::getFriends START");
 
@@ -288,10 +298,10 @@ public class SocialMediaController {
         }
     }
 
-    @PostMapping("/posts/{postId}/comments")
-    public ResponseEntity<Void> commentOnPost(@RequestHeader("Authorization") String authorizationHeader,
+    /*@PostMapping("/posts/{postId}/comments")
+    public ResponseEntity<PostCommentDto> commentOnPost(@RequestHeader("Authorization") String authorizationHeader,
                                               @PathVariable Long postId,
-                                              @RequestBody PostCommentDto commentDto) {
+                                              @RequestBody String comment) {
         log.info("SocialMediaController::commentOnPost START");
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -315,7 +325,7 @@ public class SocialMediaController {
             log.error("SocialMediaController::commentOnPost ERROR", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
+    }*/
 
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<List<PostCommentDto>> getCommentsForPost(@RequestHeader("Authorization") String authorizationHeader,
@@ -339,7 +349,7 @@ public class SocialMediaController {
         }
     }
 
-    @DeleteMapping("/comments/{commentId}")
+    @DeleteMapping("/posts/{commentId}")
     public ResponseEntity<Void> deleteComment(@RequestHeader("Authorization") String authorizationHeader,
                                               @PathVariable Long commentId) {
         log.info("SocialMediaController::deleteComment START");

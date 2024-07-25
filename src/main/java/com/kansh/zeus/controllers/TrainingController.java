@@ -3,6 +3,7 @@ package com.kansh.zeus.controllers;
 import com.kansh.zeus.config.ValidateToken;
 import com.kansh.zeus.domain.dto.trainings.TrainingInputWrapperDto;
 import com.kansh.zeus.domain.dto.trainings.TrainingItemDto;
+import com.kansh.zeus.domain.dto.trainings.TrainingSummaryDto;
 import com.kansh.zeus.domain.dto.trainings.TrainingsDto;
 import com.kansh.zeus.domain.dto.users.UserTokenDto;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
@@ -174,8 +175,8 @@ public class TrainingController {
         }
     }
 
-    /*@GetMapping("/training/summaries")
-    public ResponseEntity<TrainingSummaryDto> getTrainingsSummaryAvailableForUser(@RequestHeader("Authorization") String authorization) {
+    @GetMapping("/training/summaries")
+    public ResponseEntity<List<TrainingSummaryDto>> getTrainingsSummaryAvailableForUser(@RequestHeader("Authorization") String authorization) {
         log.info("TrainingController::getTrainingsSummaryAvailableForUser START");
 
         UserTokenDto userToken = validateToken.validateToken(authorization);
@@ -190,7 +191,7 @@ public class TrainingController {
                 log.error("ExercisesController::createSuperset ERROR : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-            TrainingSummaryDto trainingSummary = trainingService.getTrainingsSummaryAvailableForUser(userToken.getId());
+            List<TrainingSummaryDto> trainingSummary = trainingService.getTrainingsSummariesAvailableForUser(user.getId());
 
             if(isNull(trainingSummary)) {
                 log.error("TrainingController::getTrainingsSummaryAvailableForUser ERROR : Training summary not found!");
@@ -204,6 +205,6 @@ public class TrainingController {
             log.error("TrainingController::getTrainingsSummaryAvailableForUser ERROR : " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }*/
+    }
 
 }

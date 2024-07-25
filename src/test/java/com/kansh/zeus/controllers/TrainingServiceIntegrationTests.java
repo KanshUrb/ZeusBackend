@@ -132,12 +132,13 @@ public class TrainingServiceIntegrationTests {
 
         // Test for user1
         Pageable pageable = PageRequest.of(0, 10);
-        List<TrainingSummaryDto> user1Trainings = trainingService.getTrainingsSummariesAvailableForUser(user1.getId(), pageable);
+        List<TrainingSummaryDto> user1Trainings = trainingService.getTrainingsSummariesAvailableForUser(user1.getId()
+        );
         assertNotNull(user1Trainings);
         assertEquals(4, user1Trainings.size());
 
         // Test for user2
-        List<TrainingSummaryDto> user2Trainings = trainingService.getTrainingsSummariesAvailableForUser(user2.getId(), pageable);
+        List<TrainingSummaryDto> user2Trainings = trainingService.getTrainingsSummariesAvailableForUser(user2.getId());
         assertNotNull(user2Trainings);
         assertEquals(3, user2Trainings.size());
 

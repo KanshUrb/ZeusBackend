@@ -11,8 +11,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FriendDto {
 
-    private String userId;
+    private String hash;
 
-    private String friendId;
+    private String firstName;
+
+    private String lastName;
 
 }

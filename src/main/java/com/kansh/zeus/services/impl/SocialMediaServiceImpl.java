@@ -41,7 +41,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
     @Override
     @Transactional
-    public void addFriend(String userId, String friendHash) {
+    public FriendEntity addFriend(String userId, String friendHash) {
         Optional<UsersEntity> user = userRepository.findById(userId);
         Optional<UsersEntity> friend = userRepository.findByHash(friendHash);
         if (user.isPresent() && friend.isPresent()) {
@@ -49,7 +49,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
                     .user(user.get())
                     .friend(friend.get())
                     .build();
-            friendRepository.save(friendEntity);
+            return friendRepository.save(friendEntity);
         } else {
             throw new RuntimeException("User or friend not found");
         }

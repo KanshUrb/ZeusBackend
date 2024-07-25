@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public interface TrainingService {
 
-    List<TrainingSummaryDto> getTrainingsSummariesAvailableForUser(String userId, Pageable pageable);
+    List<TrainingSummaryDto> getTrainingsSummariesAvailableForUser(String userId);
 
     Optional<TrainingsDto> getTrainingById(String userId, Long id);
 

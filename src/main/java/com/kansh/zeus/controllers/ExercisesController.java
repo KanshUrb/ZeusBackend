@@ -189,16 +189,17 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        ExercisesEntity exercisesEntity = ExercisesEntity.builder()
-                .id(createExerciseWrapper.getExercise().getId())
-                .name(createExerciseWrapper.getExercise().getName())
-                .description(createExerciseWrapper.getExercise().getDescription())
-                .muscleGroup(createExerciseWrapper.getExercise().getMuscleGroup())
-                .difficultyLevel(createExerciseWrapper.getExercise().getDifficultyLevel())
-                .videoUrl(createExerciseWrapper.getExercise().getVideoUrl())
-                .build();
-        //exercisesEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
-        ExercisesEntity savedExercise = exerciseService.updateExercise(exercisesEntity);
+        ExercisesEntity currentExercise = exerciseService.getExerciseByUserAndId(userToken.getId(), createExerciseWrapper.getExercise().getId()).orElse(null);
+        if (isNull(currentExercise)) {
+            log.error("ExercisesController::updateExercise ERROR : Exercise not found!");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        currentExercise.setName(createExerciseWrapper.getExercise().getName());
+        currentExercise.setDescription(createExerciseWrapper.getExercise().getDescription());
+        currentExercise.setMuscleGroup(createExerciseWrapper.getExercise().getMuscleGroup());
+        currentExercise.setDifficultyLevel(createExerciseWrapper.getExercise().getDifficultyLevel());
+        currentExercise.setVideoUrl(createExerciseWrapper.getExercise().getVideoUrl());
+        ExercisesEntity savedExercise = exerciseService.updateExercise(currentExercise);
 
         ExercisesDto output = ExercisesDto.builder()
                 .id(savedExercise.getId())
@@ -375,17 +376,25 @@ public class ExercisesController {
 
     @PutMapping("supersets/superset")
     public ResponseEntity<SupersetsDto> updateSuperset(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody SupersetsDto supersetsDto) {
-        log.info("ExercisesController::updateSuperset START, supersetDto = {}", supersetsDto);
+                                                       @RequestBody CreateSupersetWrapper supersetsWrapper) {
+        log.info("ExercisesController::updateSuperset START, supersetDto = {}", supersetsWrapper.getSuperset());
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("ExercisesController::updateSuperset ERROR : Invalid authorization header!");
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        SupersetsEntity supersetsEntity = supersetsMapper.mapFrom(supersetsDto);
-        supersetsEntity.setCreatedBy(userRepository.findById(userToken.getId()).orElse(null));
-        SupersetsEntity savedSuperset = exerciseService.updateSuperset(supersetsEntity);
+
+        SupersetsEntity currentSuperset = exerciseService.getSupersetByUserAndId(userToken.getId(), supersetsWrapper.getSuperset().getId()).orElse(null);
+        if (isNull(currentSuperset)) {
+            log.error("ExercisesController::updateSuperset ERROR : Superset not found!");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        currentSuperset.setName(supersetsWrapper.getSuperset().getName());
+        currentSuperset.setExercise1(exerciseService.getExerciseByUserAndId(userToken.getId(), supersetsWrapper.getSuperset().getExercise1()).get());
+        currentSuperset.setExercise2(exerciseService.getExerciseByUserAndId(userToken.getId(), supersetsWrapper.getSuperset().getExercise2()).get());
+        SupersetsEntity savedSuperset = exerciseService.updateSuperset(currentSuperset);
 
         SupersetsDto output = SupersetsDto.builder()
                 .id(savedSuperset.getId())

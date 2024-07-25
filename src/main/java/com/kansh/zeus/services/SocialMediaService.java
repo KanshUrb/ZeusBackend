@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface SocialMediaService {
 
-    void addFriend(String userId, String friendHash);
+    FriendEntity addFriend(String userId, String friendHash);
     void removeFriend(String userId, String friendId);
     List<FriendEntity> getFriends(String userId);
     PostEntity createPost(PostEntity postEntity);
