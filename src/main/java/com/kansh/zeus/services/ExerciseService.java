@@ -25,6 +25,10 @@ public interface ExerciseService {
 
     Optional<SupersetsEntity> getSupersetByUserAndId(String userId, Long id);
 
+    Optional<ExercisesEntity> getExerciseById(Long id);
+
+    Optional<SupersetsEntity> getSupersetById(Long id);
+
     SupersetsEntity createSuperset(SupersetsEntity superset, UsersEntity user, List<String> sharedWith);
 
     void deleteSuperset(Long supersetId, String userId);

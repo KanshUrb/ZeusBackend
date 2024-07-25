@@ -51,14 +51,14 @@ public class SocialMediaServiceImpl implements SocialMediaService {
                     .build();
             return friendRepository.save(friendEntity);
         } else {
-            throw new RuntimeException("User or friend not found");
+            return null;
         }
     }
 
     @Override
     @Transactional
     public void removeFriend(String userId, String friendHash) {
-        Optional<UsersEntity> friend = userRepository.findById(friendHash);
+        Optional<UsersEntity> friend = userRepository.findByHash(friendHash);
         if(friend.isPresent()) {
             friendRepository.deleteByUserIdAndFriendId(userId, friend.get().getId());
         } else {

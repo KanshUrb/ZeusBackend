@@ -18,5 +18,5 @@ public class SeriesDto {
     private Float weight1;
 
     @Builder.Default
-    private Float weight2 = 0.0F;
+    private Float weight2 = 0.0F; // if itemType == 2 (superset)
 }

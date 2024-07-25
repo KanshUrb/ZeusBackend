@@ -47,6 +47,11 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    public Optional<ExercisesEntity> getExerciseById(Long id) {
+        return exerciseRepository.findById(id);
+    }
+
+    @Override
     public ExercisesEntity createExercise(ExercisesEntity exercise, UsersEntity user, List<String> sharedWith) {
         log.info("ExerciseService::createExercise START");
 
@@ -114,6 +119,11 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public Optional<SupersetsEntity> getSupersetByUserAndId(String userId, Long id) {
         return supersetRepository.findSupersetByUserAndId(userId, id);
+    }
+
+    @Override
+    public Optional<SupersetsEntity> getSupersetById(Long id) {
+        return supersetRepository.findById(id);
     }
 
     @Override

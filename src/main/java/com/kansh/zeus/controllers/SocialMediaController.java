@@ -12,6 +12,7 @@ import com.kansh.zeus.domain.entities.friends.PostCommentEntity;
 import com.kansh.zeus.domain.entities.friends.PostEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
 import com.kansh.zeus.mappers.Mapper;
+import com.kansh.zeus.repositories.friends.FriendRepository;
 import com.kansh.zeus.repositories.users.UserRepository;
 import com.kansh.zeus.services.SocialMediaService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ public class SocialMediaController {
     private final Mapper<PostEntity, PostDto> postMapper;
     private final Mapper<PostCommentEntity, PostCommentDto> postCommentMapper;
     private final UserRepository userRepository;
+    private final FriendRepository friendRepository;
 
     @Autowired
     public SocialMediaController(SocialMediaService socialMediaService,
@@ -45,13 +47,14 @@ public class SocialMediaController {
                                  Mapper<FriendEntity, FriendDto> friendMapper,
                                  Mapper<PostEntity, PostDto> postMapper,
                                  Mapper<PostCommentEntity, PostCommentDto> postCommentMapper,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository, FriendRepository friendRepository) {
         this.socialMediaService = socialMediaService;
         this.validateToken = validateToken;
         this.friendMapper = friendMapper;
         this.postMapper = postMapper;
         this.postCommentMapper = postCommentMapper;
         this.userRepository = userRepository;
+        this.friendRepository = friendRepository;
     }
 
     @PostMapping("/friends/{friendHash}")
@@ -67,15 +70,13 @@ public class SocialMediaController {
 
         try {
             FriendEntity addedFriend = socialMediaService.addFriend(userToken.getId(), friendHash);
-            UsersEntity friendEntity = userRepository.findByHash(friendHash).orElse(null);
-            if (isNull(friendEntity)) {
-                log.error("SocialMediaController::addFriend ERROR: User (friend) not found!");
+            if(isNull(addedFriend)) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             FriendDto addedFriendDto = FriendDto.builder()
-                    .hash(friendEntity.getHash())
-                    .firstName(friendEntity.getFirstName())
-                    .lastName(friendEntity.getLastName())
+                    .hash(addedFriend.getFriend().getHash())
+                    .firstName(addedFriend.getFriend().getFirstName())
+                    .lastName(addedFriend.getFriend().getLastName())
                     .build();
             log.info("SocialMediaController::addFriend STOP addedFriend = {}", addedFriend);
             return new ResponseEntity<>(addedFriendDto, HttpStatus.OK);
@@ -122,9 +123,18 @@ public class SocialMediaController {
                 log.error("SocialMediaController::getFriends ERROR: : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
+            log.info("KURWA");
             List<FriendEntity> friends = socialMediaService.getFriends(user.getId());
-            List<FriendDto> friendDto = friends.stream().map(friendMapper::mapTo).toList();
-            log.info("SocialMediaController::getFriends STOP");
+            log.info("KURWA 2");
+            log.info(friends.toString());
+            List<FriendDto> friendDto = friends.stream().map(e -> isNull(e) ? null : FriendDto.builder()
+                    .id(e.getId())
+                    .hash(e.getFriend().getHash())
+                    .firstName(e.getFriend().getFirstName())
+                    .lastName(e.getFriend().getLastName())
+                    .build()
+            ).toList();
+            log.info("SocialMediaController::getFriends STOP, friends = {}", friendDto);
             return new ResponseEntity<>(friendDto, HttpStatus.OK);
         } catch (Exception e) {
             log.error("SocialMediaController::getFriends ERROR", e);
@@ -205,7 +215,7 @@ public class SocialMediaController {
                     .totalElements(posts.getTotalElements())
                     .build();
 
-            log.info("SocialMediaController::getPosts STOP");
+            log.info("SocialMediaController::getPosts STOP, posts = {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("SocialMediaController::getPosts ERROR", e);

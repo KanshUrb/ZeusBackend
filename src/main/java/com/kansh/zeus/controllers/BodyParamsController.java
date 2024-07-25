@@ -134,7 +134,7 @@ public class BodyParamsController {
                                                         @RequestBody BodyParamsDto bodyParamsDto) {
         log.info("BodyPramsController::updateBodyParamsForUser START");
         log.info("BodyPramsController::updateBodyParamsForUser userId = {}, newBodyParams = {}", bodyParamId, bodyParamsDto.toString());
-
+        log.info(authorizationHeader);
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("BodyPramsController::updateBodyParamsForUser ERROR : Invalid authorization header!");

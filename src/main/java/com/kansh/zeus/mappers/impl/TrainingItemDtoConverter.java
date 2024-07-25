@@ -8,6 +8,7 @@ import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
 import com.kansh.zeus.mappers.Mapper;
 import com.kansh.zeus.services.ExerciseService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class TrainingItemDtoConverter {
     public List<TrainingItemDto> convert(List<TrainingItemInputDto> inputList, String userId) {
@@ -37,7 +39,6 @@ public class TrainingItemDtoConverter {
     private TrainingItemDto convertItem(TrainingItemInputDto inputDto, String userId) {
         ExercisesDto exercise = null;
         SupersetsDto superset = null;
-
         if (inputDto.getItemType() != null && inputDto.getItemId() != null) {
             if (inputDto.getItemType() == 1) {
                 Optional<ExercisesEntity> exerciseOptional = exerciseService.getExerciseByUserAndId(userId, inputDto.getItemId());
@@ -49,7 +50,13 @@ public class TrainingItemDtoConverter {
             } else if (inputDto.getItemType() == 2) {
                 Optional<SupersetsEntity> supersetOptional = exerciseService.getSupersetByUserAndId(userId, inputDto.getItemId());
                 if (supersetOptional.isPresent()) {
-                    superset = supersetMapper.mapTo(supersetOptional.get());
+                    superset = SupersetsDto.builder()
+                            .id(supersetOptional.get().getId())
+                            .name(supersetOptional.get().getName())
+                            .exercise1(supersetOptional.get().getExercise1().getId())
+                            .exercise2(supersetOptional.get().getExercise2().getId())
+                            .rate(supersetOptional.get().getRate())
+                            .build();
                 } else {
                     throw new IllegalArgumentException("Superset not found");
                 }
