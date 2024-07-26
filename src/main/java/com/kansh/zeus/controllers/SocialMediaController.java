@@ -144,7 +144,7 @@ public class SocialMediaController {
 
     @PostMapping("/posts")
     public ResponseEntity<PostDto> createPost(@RequestHeader("Authorization") String authorizationHeader,
-                                              @RequestBody PostDto postDto) {
+                                              @RequestBody String content) {
         log.info("SocialMediaController::createPost START");
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -159,10 +159,11 @@ public class SocialMediaController {
                 log.error("BodyPramsController::updateBodyParams ERROR : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-            PostEntity postEntity = socialMediaService.createPost(postMapper.mapFrom(postDto));
-            postEntity.setCreatedBy(user);
+            PostEntity postEntity = socialMediaService.createPost(user, content);
             log.info("SocialMediaController::createPost STOP");
-            return new ResponseEntity<>(postMapper.mapTo(postEntity), HttpStatus.OK);
+            PostDto postDto = postMapper.mapTo(postEntity);
+            log.info(postDto.toString());
+            return new ResponseEntity<>(postDto, HttpStatus.OK);
         } catch (Exception e) {
             log.error("SocialMediaController::createPost ERROR", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

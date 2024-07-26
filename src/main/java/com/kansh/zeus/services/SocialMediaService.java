@@ -3,6 +3,7 @@ package com.kansh.zeus.services;
 import com.kansh.zeus.domain.entities.friends.FriendEntity;
 import com.kansh.zeus.domain.entities.friends.PostCommentEntity;
 import com.kansh.zeus.domain.entities.friends.PostEntity;
+import com.kansh.zeus.domain.entities.users.UsersEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
@@ -12,7 +13,7 @@ public interface SocialMediaService {
     FriendEntity addFriend(String userId, String friendHash);
     void removeFriend(String userId, String friendId);
     List<FriendEntity> getFriends(String userId);
-    PostEntity createPost(PostEntity postEntity);
+    PostEntity createPost(UsersEntity user, String postContent);
     PostEntity getPostById(Long postId);
     Page<PostEntity> getPosts(String userId, Pageable pageable);
     PostEntity updatePost(Long postId, PostEntity postEntity);

@@ -1,5 +1,6 @@
 package com.kansh.zeus.services.impl;
 
+import java.sql.Timestamp;
 import com.kansh.zeus.domain.entities.friends.FriendEntity;
 import com.kansh.zeus.domain.entities.friends.PostEntity;
 import com.kansh.zeus.domain.entities.friends.PostCommentEntity;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -73,8 +75,17 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
     @Override
     @Transactional
-    public PostEntity createPost(PostEntity postEntity) {
-        return postRepository.save(postEntity);
+    public PostEntity createPost(UsersEntity user, String postContent) {
+        log.info("SocialMediaServiceImpl::createPost START");
+        log.info("SocialMediaServiceImpl::createPost user = {}, postContent = {}", user, postContent);
+        PostEntity postEntity = PostEntity.builder()
+                .content(postContent)
+                .createdBy(user)
+                .createdAt(Timestamp.valueOf(LocalDateTime.now()))
+                .build();
+        PostEntity savedPost = postRepository.save(postEntity);
+        log.info("SocialMediaServiceImpl::createPost STOP, createdPost = {}", savedPost);
+        return savedPost;
     }
 
     @Override
