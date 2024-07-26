@@ -1,6 +1,7 @@
 package com.kansh.zeus.mappers.impl;
 
 import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetOutputDto;
 import com.kansh.zeus.domain.dto.exercises.SupersetsDto;
 import com.kansh.zeus.domain.dto.trainings.TrainingItemDto;
 import com.kansh.zeus.domain.dto.trainings.TrainingItemInputDto;
@@ -38,7 +39,7 @@ public class TrainingItemDtoConverter {
 
     private TrainingItemDto convertItem(TrainingItemInputDto inputDto, String userId) {
         ExercisesDto exercise = null;
-        SupersetsDto superset = null;
+        SupersetOutputDto superset = null;
         if (inputDto.getItemType() != null && inputDto.getItemId() != null) {
             if (inputDto.getItemType() == 1) {
                 Optional<ExercisesEntity> exerciseOptional = exerciseService.getExerciseByUserAndId(userId, inputDto.getItemId());
@@ -50,11 +51,11 @@ public class TrainingItemDtoConverter {
             } else if (inputDto.getItemType() == 2) {
                 Optional<SupersetsEntity> supersetOptional = exerciseService.getSupersetByUserAndId(userId, inputDto.getItemId());
                 if (supersetOptional.isPresent()) {
-                    superset = SupersetsDto.builder()
+                    superset = SupersetOutputDto.builder()
                             .id(supersetOptional.get().getId())
                             .name(supersetOptional.get().getName())
-                            .exercise1(supersetOptional.get().getExercise1().getId())
-                            .exercise2(supersetOptional.get().getExercise2().getId())
+                            .exercise1(exerciseMapper.mapTo(supersetOptional.get().getExercise1()))
+                            .exercise2(exerciseMapper.mapTo(supersetOptional.get().getExercise2()))
                             .rate(supersetOptional.get().getRate())
                             .build();
                 } else {

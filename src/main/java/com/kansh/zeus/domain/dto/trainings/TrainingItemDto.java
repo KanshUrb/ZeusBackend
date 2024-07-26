@@ -1,7 +1,7 @@
 package com.kansh.zeus.domain.dto.trainings;
 
 import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
-import com.kansh.zeus.domain.dto.exercises.SupersetsDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetOutputDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +23,7 @@ public class TrainingItemDto {
     private ExercisesDto exercise = null;
 
     @Builder.Default
-    private SupersetsDto superset = null;
+    private SupersetOutputDto superset = null;
 
     private List<SeriesDto> series;
 }

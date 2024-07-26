@@ -9,15 +9,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SupersetsDto {
+public class SupersetOutputDto {
 
     private Long id;
 
     private String name;
 
-    private Long exercise1;
+    private ExercisesDto exercise1;
 
-    private Long exercise2;
+    private ExercisesDto exercise2;
 
     private Float rate;
 

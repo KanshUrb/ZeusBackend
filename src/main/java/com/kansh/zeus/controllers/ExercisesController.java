@@ -274,7 +274,7 @@ public class ExercisesController {
     }
 
     @GetMapping("/supersets/{supersetId}")
-    public ResponseEntity<SupersetsDto> getSupersetByUserAndId(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<SupersetOutputDto> getSupersetByUserAndId(@RequestHeader("Authorization") String authorizationHeader,
                                                                 @PathVariable Long supersetId) {
         log.info("ExercisesController::getSupersetByUserAndId START, exerciseId = {}", supersetId);
 
@@ -288,11 +288,11 @@ public class ExercisesController {
         if (superset.isPresent()) {
             SupersetsEntity supersetEntity = superset.get();
             log.info("ExercisesController::getSupersetByUserAndId STOP exercise = {}", supersetEntity);
-            SupersetsDto output = SupersetsDto.builder()
+            SupersetOutputDto output = SupersetOutputDto.builder()
                     .id(supersetEntity.getId())
                     .name(supersetEntity.getName())
-                    .exercise1(supersetEntity.getExercise1().getId())
-                    .exercise2(supersetEntity.getExercise2().getId())
+                    .exercise1(exercisesMapper.mapTo(supersetEntity.getExercise1()))
+                    .exercise2(exercisesMapper.mapTo(supersetEntity.getExercise2()))
                     .rate(supersetEntity.getRate())
                     .userCounter(supersetEntity.getUserCounter())
                     .build();

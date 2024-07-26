@@ -1,6 +1,7 @@
 package com.kansh.zeus.services.impl;
 
 import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetOutputDto;
 import com.kansh.zeus.domain.dto.exercises.SupersetsDto;
 import com.kansh.zeus.domain.dto.trainings.*;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
@@ -10,6 +11,7 @@ import com.kansh.zeus.domain.entities.trainings.TrainingsItemsEntity;
 import com.kansh.zeus.domain.entities.trainings.TrainingsItemsSeriesEntity;
 import com.kansh.zeus.domain.entities.trainings.UserTrainingsEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
+import com.kansh.zeus.mappers.Mapper;
 import com.kansh.zeus.repositories.exercises.ExerciseRepository;
 import com.kansh.zeus.repositories.exercises.SupersetRepository;
 import com.kansh.zeus.repositories.trainings.TrainingItemRepository;
@@ -40,14 +42,16 @@ public class TrainingServiceImpl implements TrainingService {
     private final ExerciseRepository exerciseRepository;
     private final SupersetRepository supersetRepository;
     private final TrainingItemSeriesRepository trainingItemSeriesRepository;
+    private final Mapper<ExercisesEntity, ExercisesDto> exerciseMapper;
 
-    public TrainingServiceImpl(TrainingRepository trainingRepository, UserTrainingsRepository userTrainingsRepository, ExerciseRepository exerciseRepository, SupersetRepository supersetRepository, TrainingItemRepository trainingItemRepository, TrainingItemSeriesRepository trainingItemSeriesRepository) {
+    public TrainingServiceImpl(TrainingRepository trainingRepository, UserTrainingsRepository userTrainingsRepository, ExerciseRepository exerciseRepository, SupersetRepository supersetRepository, TrainingItemRepository trainingItemRepository, TrainingItemSeriesRepository trainingItemSeriesRepository, Mapper<ExercisesEntity, ExercisesDto> exerciseMapper) {
         this.trainingRepository = trainingRepository;
         this.trainingItemRepository = trainingItemRepository;
         this.userTrainingsRepository = userTrainingsRepository;
         this.exerciseRepository = exerciseRepository;
         this.supersetRepository = supersetRepository;
         this.trainingItemSeriesRepository = trainingItemSeriesRepository;
+        this.exerciseMapper = exerciseMapper;
     }
 
     @Override
@@ -107,11 +111,11 @@ public class TrainingServiceImpl implements TrainingService {
                             .videoUrl(trainingItemEntity.getExercise().getVideoUrl())
                             .rate(trainingItemEntity.getExercise().getRate())
                             .build() : null)
-                    .superset(!isNull(trainingItemEntity.getSuperset()) ? SupersetsDto.builder()
+                    .superset(!isNull(trainingItemEntity.getSuperset()) ? SupersetOutputDto.builder()
                             .id(trainingItemEntity.getSuperset().getId())
                             .name(trainingItemEntity.getSuperset().getName())
-                            .exercise1(trainingItemEntity.getSuperset().getExercise1().getId())
-                            .exercise2(trainingItemEntity.getSuperset().getExercise2().getId())
+                            .exercise1(exerciseMapper.mapTo(trainingItemEntity.getSuperset().getExercise1()))
+                            .exercise2(exerciseMapper.mapTo(trainingItemEntity.getSuperset().getExercise2()))
                             .rate(trainingItemEntity.getSuperset().getRate())
                             .build() : null)
                     .series(series)
