@@ -1,9 +1,6 @@
 package com.kansh.zeus.services.impl;
 
-import com.kansh.zeus.domain.dto.exercises.ExerciseWrapperDto;
-import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
-import com.kansh.zeus.domain.dto.exercises.SupersetWrapperDto;
-import com.kansh.zeus.domain.dto.exercises.SupersetsDto;
+import com.kansh.zeus.domain.dto.exercises.*;
 import com.kansh.zeus.domain.dto.friends.FriendDto;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
@@ -114,19 +111,19 @@ public class ExerciseServiceImpl implements ExerciseService {
 
     @Override
     @Transactional
-    public ExerciseWrapperDto updateExercise(String userId, ExercisesEntity exercise,  ExerciseWrapperDto exerciseWrapperDto) {
+    public ExerciseDetailsDto updateExercise(String userId, ExercisesEntity exercise, ExerciseDetailsDto exerciseDetails) {
         log.info("ExerciseService::updateExercise START");
 
-        exercise.setName(exerciseWrapperDto.getExercise().getName());
-        exercise.setDescription(exerciseWrapperDto.getExercise().getDescription());
-        exercise.setMuscleGroup(exerciseWrapperDto.getExercise().getMuscleGroup());
-        exercise.setDifficultyLevel(exerciseWrapperDto.getExercise().getDifficultyLevel());
-        exercise.setVideoUrl(exerciseWrapperDto.getExercise().getVideoUrl());
+        exercise.setName(exerciseDetails.getExercise().getName());
+        exercise.setDescription(exerciseDetails.getExercise().getDescription());
+        exercise.setMuscleGroup(exerciseDetails.getExercise().getMuscleGroup());
+        exercise.setDifficultyLevel(exerciseDetails.getExercise().getDifficultyLevel());
+        exercise.setVideoUrl(exerciseDetails.getExercise().getVideoUrl());
         ExercisesEntity savedExercise = exerciseRepository.save(exercise);
 
         List<UsersEntity> userExercisesEntities = getSharedWith(1, savedExercise.getId());
         Set<String> currentUserHashes = userExercisesEntities.stream().map(UsersEntity::getHash).collect(Collectors.toSet());
-        Set<String> newUserHashes = exerciseWrapperDto.getSharedWith().stream().map(FriendDto::getHash).collect(Collectors.toSet());
+        Set<String> newUserHashes = exerciseDetails.getSharedWith().stream().map(FriendDto::getHash).collect(Collectors.toSet());
 
         currentUserHashes.stream()
                 .filter(hash -> !newUserHashes.contains(hash))
@@ -139,7 +136,7 @@ public class ExerciseServiceImpl implements ExerciseService {
                         .sharedWith(userRepository.findByHash(hash).orElseThrow())
                         .build()));
 
-        ExerciseWrapperDto output = ExerciseWrapperDto.builder()
+        ExerciseDetailsDto output = ExerciseDetailsDto.builder()
                 .exercise(ExercisesDto.builder()
                         .id(savedExercise.getId())
                         .name(savedExercise.getName())
@@ -149,7 +146,7 @@ public class ExerciseServiceImpl implements ExerciseService {
                         .videoUrl(savedExercise.getVideoUrl())
                         .rate(savedExercise.getRate())
                         .build())
-                .sharedWith(exerciseWrapperDto.getSharedWith())
+                .sharedWith(exerciseDetails.getSharedWith())
                 .build();
 
 

@@ -197,9 +197,9 @@ public class ExercisesController {
     }
 
     @PutMapping("exercises/exercise")
-    public ResponseEntity<ExerciseWrapperDto> updateExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody ExerciseWrapperDto exerciseWrapperDto) {
-        log.info("ExercisesController::updateExercise START, exerciseWrapperDto = {}", exerciseWrapperDto.toString());
+    public ResponseEntity<ExerciseDetailsDto> updateExercise(@RequestHeader("Authorization") String authorizationHeader,
+                                                       @RequestBody ExerciseDetailsDto exerciseDetails) {
+        log.info("ExercisesController::updateExercise START, exerciseWrapperDto = {}", exerciseDetails.toString());
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
@@ -207,13 +207,13 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        ExercisesEntity currentExercise = exerciseService.getExerciseByUserAndId(userToken.getId(), exerciseWrapperDto.getExercise().getId()).orElse(null);
+        ExercisesEntity currentExercise = exerciseService.getExerciseByUserAndId(userToken.getId(), exerciseDetails.getExercise().getId()).orElse(null);
         if (isNull(currentExercise)) {
             log.error("ExercisesController::updateExercise ERROR : Exercise not found!");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        ExerciseWrapperDto output = exerciseService.updateExercise(userToken.getId(), currentExercise, exerciseWrapperDto);
+        ExerciseDetailsDto output = exerciseService.updateExercise(userToken.getId(), currentExercise, exerciseDetails);
 
         log.info("ExercisesController::updateExercise STOP, exerciseWrapperDto = {}", output.toString());
 
@@ -279,7 +279,7 @@ public class ExercisesController {
     }
 
     @GetMapping("/supersets/{supersetId}")
-    public ResponseEntity<SupersetOutputDto> getSupersetByUserAndId(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<SupersetDetailsDto> getSupersetDetails(@RequestHeader("Authorization") String authorizationHeader,
                                                                 @PathVariable Long supersetId) {
         log.info("ExercisesController::getSupersetByUserAndId START, exerciseId = {}", supersetId);
 
@@ -290,10 +290,10 @@ public class ExercisesController {
         }
 
         Optional<SupersetsEntity> superset = exerciseService.getSupersetByUserAndId(userToken.getId(), supersetId);
+        List<FriendDto> sharedWith = exerciseService.getSharedWith(2, supersetId).stream().map(userEntityToFriendDtoMapper::mapToFriendDto).toList();
         if (superset.isPresent()) {
             SupersetsEntity supersetEntity = superset.get();
-            log.info("ExercisesController::getSupersetByUserAndId STOP exercise = {}", supersetEntity);
-            SupersetOutputDto output = SupersetOutputDto.builder()
+            SupersetOutputDto supersetOutput = SupersetOutputDto.builder()
                     .id(supersetEntity.getId())
                     .name(supersetEntity.getName())
                     .exercise1(exercisesMapper.mapTo(supersetEntity.getExercise1()))
@@ -301,6 +301,12 @@ public class ExercisesController {
                     .rate(supersetEntity.getRate())
                     .userCounter(supersetEntity.getUserCounter())
                     .build();
+
+            SupersetDetailsDto output = SupersetDetailsDto.builder()
+                    .superset(supersetOutput)
+                    .sharedWith(sharedWith)
+                    .build();
+            log.info("ExercisesController::getSupersetByUserAndId STOP supersetDetails = {}", output);
             return new ResponseEntity<>(output, HttpStatus.OK);
         } else {
             log.info("ExercisesController::getSupersetByUserAndId ERROR Exercise not found");

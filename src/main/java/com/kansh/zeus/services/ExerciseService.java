@@ -1,5 +1,6 @@
 package com.kansh.zeus.services;
 
+import com.kansh.zeus.domain.dto.exercises.ExerciseDetailsDto;
 import com.kansh.zeus.domain.dto.exercises.ExerciseWrapperDto;
 import com.kansh.zeus.domain.dto.exercises.SupersetWrapperDto;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
@@ -23,7 +24,7 @@ public interface ExerciseService {
 
     void deleteExercise(Long exerciseId, String userId);
 
-    ExerciseWrapperDto updateExercise(String userId, ExercisesEntity exercise, ExerciseWrapperDto exerciseWrapperDto);
+    ExerciseDetailsDto updateExercise(String userId, ExercisesEntity exercise, ExerciseDetailsDto exerciseDetails);
 
     Page<Object[]> getSupersetsSummariesAvailableForUser(String userId, Pageable pageable);
 
