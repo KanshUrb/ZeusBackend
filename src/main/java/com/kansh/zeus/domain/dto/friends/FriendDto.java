@@ -11,8 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FriendDto {
 
-    private Long id;
-
     private String hash;
 
     private String firstName;

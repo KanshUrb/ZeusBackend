@@ -1,23 +1,33 @@
 package com.kansh.zeus.services.impl;
 
+import com.kansh.zeus.domain.dto.exercises.ExerciseWrapperDto;
+import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
+import com.kansh.zeus.domain.dto.friends.FriendDto;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
 import com.kansh.zeus.domain.entities.exercises.UserExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.UserSupersetsEntity;
+import com.kansh.zeus.domain.entities.friends.FriendEntity;
+import com.kansh.zeus.domain.entities.trainings.UserTrainingsEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
 import com.kansh.zeus.repositories.exercises.ExerciseRepository;
 import com.kansh.zeus.repositories.exercises.SupersetRepository;
 import com.kansh.zeus.repositories.exercises.UserExerciseRepository;
 import com.kansh.zeus.repositories.exercises.UserSupersetRepository;
+import com.kansh.zeus.repositories.trainings.UserTrainingsRepository;
+import com.kansh.zeus.repositories.users.UserRepository;
 import com.kansh.zeus.services.ExerciseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,13 +37,32 @@ public class ExerciseServiceImpl implements ExerciseService {
     private final UserExerciseRepository userExerciseRepository;
     private final SupersetRepository supersetRepository;
     private final UserSupersetRepository userSupersetRepository;
+    private final UserTrainingsRepository userTrainingsRepository;
+    private final UserRepository userRepository;
 
     public ExerciseServiceImpl(ExerciseRepository exerciseRepository, UserExerciseRepository userExerciseRepository,
-                               SupersetRepository supersetRepository, UserSupersetRepository userSupersetRepository) {
+                               SupersetRepository supersetRepository, UserSupersetRepository userSupersetRepository, UserTrainingsRepository userTrainingsRepository, UserRepository userRepository) {
         this.exerciseRepository = exerciseRepository;
         this.userExerciseRepository = userExerciseRepository;
         this.supersetRepository = supersetRepository;
         this.userSupersetRepository = userSupersetRepository;
+        this.userTrainingsRepository = userTrainingsRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public List<UsersEntity> getSharedWith(int itemType, Long itemId) {
+        log.info("ExerciseService::getSharedWith START itemType = {}, itemId = {}", itemType == 1 ? "Exercise" : itemType == 2 ? "Superset" : "Training", itemId);
+
+        return switch (itemType) {
+            case 1 -> userExerciseRepository.findAllByExercise_Id(itemId).stream().map(UserExercisesEntity::getSharedWith).toList();
+            case 2 -> userSupersetRepository.findAllBySuperset_Id(itemId).stream().map(UserSupersetsEntity::getSharedWith).toList();
+            case 3 -> userTrainingsRepository.findAllByTraining_Id(itemId).stream().map(UserTrainingsEntity::getSharedWith).toList();
+            default -> {
+                log.info("ExercisesService::getSharedWith ERROR Unexpected itemType: {}", itemType);
+                throw new IllegalStateException("Unexpected itemType: " + itemType);
+            }
+        };
     }
 
     @Override
@@ -57,13 +86,11 @@ public class ExerciseServiceImpl implements ExerciseService {
 
         exercise.setCreatedBy(user);
         ExercisesEntity savedExercise = exerciseRepository.save(exercise);
-
         List<UserExercisesEntity> userExercisesEntities = new ArrayList<>();
         for (String sharedWithId : sharedWith) {
             userExercisesEntities.add(UserExercisesEntity.builder()
                     .exercise(savedExercise)
-                    .user(user)
-                    .sharedWith(UsersEntity.builder().id(sharedWithId).build())
+                    .sharedWith(userRepository.findByHash(sharedWithId).orElseThrow())
                     .build());
         }
         log.info("userExercisesEntities: {}", userExercisesEntities);
@@ -84,11 +111,48 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public ExercisesEntity updateExercise(ExercisesEntity exercisesEntity) {
+    @Transactional
+    public ExerciseWrapperDto updateExercise(String userId, ExercisesEntity exercise,  ExerciseWrapperDto exerciseWrapperDto) {
         log.info("ExerciseService::updateExercise START");
-        ExercisesEntity updatedExercise = exerciseRepository.save(exercisesEntity);
-        log.info("ExerciseService::updateExercise STOP");
-        return updatedExercise;
+
+        exercise.setName(exerciseWrapperDto.getExercise().getName());
+        exercise.setDescription(exerciseWrapperDto.getExercise().getDescription());
+        exercise.setMuscleGroup(exerciseWrapperDto.getExercise().getMuscleGroup());
+        exercise.setDifficultyLevel(exerciseWrapperDto.getExercise().getDifficultyLevel());
+        exercise.setVideoUrl(exerciseWrapperDto.getExercise().getVideoUrl());
+        ExercisesEntity savedExercise = exerciseRepository.save(exercise);
+
+        List<UsersEntity> userExercisesEntities = getSharedWith(1, savedExercise.getId());
+        Set<String> currentUserHashes = userExercisesEntities.stream().map(UsersEntity::getHash).collect(Collectors.toSet());
+        Set<String> newUserHashes = exerciseWrapperDto.getSharedWith().stream().map(FriendDto::getHash).collect(Collectors.toSet());
+
+        currentUserHashes.stream()
+                .filter(hash -> !newUserHashes.contains(hash))
+                .forEach(hash -> userExerciseRepository.deleteByExercise_IdAndSharedWith_Hash(savedExercise.getId(), hash));
+
+        newUserHashes.stream()
+                .filter(hash -> !currentUserHashes.contains(hash))
+                .forEach(hash -> userExerciseRepository.save(UserExercisesEntity.builder()
+                        .exercise(savedExercise)
+                        .sharedWith(userRepository.findByHash(hash).orElseThrow())
+                        .build()));
+
+        ExerciseWrapperDto output = ExerciseWrapperDto.builder()
+                .exercise(ExercisesDto.builder()
+                        .id(savedExercise.getId())
+                        .name(savedExercise.getName())
+                        .description(savedExercise.getDescription())
+                        .muscleGroup(savedExercise.getMuscleGroup())
+                        .difficultyLevel(savedExercise.getDifficultyLevel())
+                        .videoUrl(savedExercise.getVideoUrl())
+                        .rate(savedExercise.getRate())
+                        .build())
+                .sharedWith(exerciseWrapperDto.getSharedWith())
+                .build();
+
+
+        log.info("ExerciseService::updateExercise STOP, exerciseWrapperDto = {}", output);
+        return output;
     }
 
     @Override

@@ -123,12 +123,9 @@ public class SocialMediaController {
                 log.error("SocialMediaController::getFriends ERROR: : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-            log.info("KURWA");
             List<FriendEntity> friends = socialMediaService.getFriends(user.getId());
-            log.info("KURWA 2");
             log.info(friends.toString());
             List<FriendDto> friendDto = friends.stream().map(e -> isNull(e) ? null : FriendDto.builder()
-                    .id(e.getId())
                     .hash(e.getFriend().getHash())
                     .firstName(e.getFriend().getFirstName())
                     .lastName(e.getFriend().getLastName())

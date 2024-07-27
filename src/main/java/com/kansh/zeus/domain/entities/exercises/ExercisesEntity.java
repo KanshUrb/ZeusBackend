@@ -47,7 +47,7 @@ public class ExercisesEntity {
     @JoinColumn(name = "created_by")
     private UsersEntity createdBy;
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "exercise")
     private Set<UserExercisesEntity> userExercises;
 
     @PrePersist

@@ -1,12 +1,16 @@
 package com.kansh.zeus.controllers;
 
 import com.kansh.zeus.config.ValidateToken;
+import com.kansh.zeus.domain.dto.friends.FriendDto;
 import com.kansh.zeus.domain.dto.users.UserTokenDto;
 import com.kansh.zeus.domain.dto.exercises.*;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
+import com.kansh.zeus.domain.entities.exercises.UserExercisesEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
 import com.kansh.zeus.mappers.Mapper;
+import com.kansh.zeus.mappers.impl.UserEntityToFriendDtoMapper;
+import com.kansh.zeus.repositories.exercises.UserExerciseRepository;
 import com.kansh.zeus.repositories.users.UserRepository;
 import com.kansh.zeus.services.ExerciseService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +20,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
@@ -36,19 +43,25 @@ public class ExercisesController {
 
     private final Mapper<SupersetsEntity, SupersetsDto> supersetsMapper;
 
+    private final UserEntityToFriendDtoMapper userEntityToFriendDtoMapper;
+
     private final ValidateToken validateToken;
+    private final UserExerciseRepository userExerciseRepository;
 
     @Autowired
     public ExercisesController(ExerciseService exerciseService,
                                UserRepository userRepository,
                                ValidateToken validateToken,
                                Mapper<ExercisesEntity, ExercisesDto> exercisesMapper,
-                               Mapper<SupersetsEntity, SupersetsDto> supersetsMapper) {
+                               Mapper<SupersetsEntity, SupersetsDto> supersetsMapper,
+                               UserEntityToFriendDtoMapper userEntityToFriendDtoMapper, UserExerciseRepository userExerciseRepository) {
         this.exerciseService = exerciseService;
         this.userRepository = userRepository;
         this.validateToken = validateToken;
         this.exercisesMapper = exercisesMapper;
         this.supersetsMapper = supersetsMapper;
+        this.userEntityToFriendDtoMapper = userEntityToFriendDtoMapper;
+        this.userExerciseRepository = userExerciseRepository;
     }
 
     @GetMapping("/exercises/summaries")
@@ -94,7 +107,7 @@ public class ExercisesController {
     }
 
     @GetMapping("/exercises/{exerciseId}")
-    public ResponseEntity<ExercisesDto> getExercisesByUserAndId(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<ExerciseDetailsDto> getExerciseDetails(@RequestHeader("Authorization") String authorizationHeader,
                                                 @PathVariable Long exerciseId) {
         log.info("ExercisesController::getExercisesByUserAndId START, exerciseId = {}", exerciseId);
 
@@ -105,10 +118,15 @@ public class ExercisesController {
         }
 
         Optional<ExercisesEntity> exercise = exerciseService.getExerciseByUserAndId(userToken.getId(), exerciseId);
+        List<FriendDto> sharedWith = exerciseService.getSharedWith(1, exerciseId).stream().map(userEntityToFriendDtoMapper::mapToFriendDto).toList();
         if (exercise.isPresent()) {
-            ExercisesEntity exercisesEntity = exercise.get();
-            log.info("ExercisesController::getExerciseByUserAndId STOP exercise = {}",exercisesEntity);
-            return new ResponseEntity<>(exercisesMapper.mapTo(exercisesEntity), HttpStatus.OK);
+            ExerciseDetailsDto output = ExerciseDetailsDto.builder()
+                    .exercise(exercisesMapper.mapTo(exercise.get()))
+                    .sharedWith(sharedWith)
+                    .build();
+
+            log.info("ExercisesController::getExerciseByUserAndId STOP exerciseDetails = {}", output);
+            return new ResponseEntity<>(output, HttpStatus.OK);
         } else {
             log.info("ExercisesController::getExerciseByUserAndId ERROR Exercise not found");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -118,7 +136,7 @@ public class ExercisesController {
 
     @PostMapping("exercises/exercise")
     public ResponseEntity<ExercisesDto> createExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody CreateExerciseWrapper wrapper) {
+                                                       @RequestBody ExerciseWrapperDto wrapper) {
         log.info("ExercisesController::createExercise START");
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -128,7 +146,7 @@ public class ExercisesController {
         }
 
         ExercisesDto exercise = wrapper.getExercise();
-        List<String> sharedWith = wrapper.getSharedWith();
+        List<FriendDto> sharedWith = wrapper.getSharedWith();
 
         try {
             UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
@@ -138,9 +156,7 @@ public class ExercisesController {
             }
             log.info("ExercisesController::addExercise exercise = {}, user = {}, sharedWith = {}", exercise.toString(), user, sharedWith);
             ExercisesEntity exercisesEntity = exercisesMapper.mapFrom(exercise);
-            exercisesEntity.setId(null);
-            exercisesEntity.setCreatedBy(user);
-            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesEntity, user, sharedWith);
+            ExercisesEntity savedExercise = exerciseService.createExercise(exercisesEntity, user, sharedWith.stream().map(FriendDto::getHash).toList());
             log.info("ExercisesController::createExercise STOP exercise = {}", savedExercise);
             return new ResponseEntity<>(exercisesMapper.mapTo(savedExercise), HttpStatus.OK);
         } catch (Exception e) {
@@ -149,6 +165,7 @@ public class ExercisesController {
         }
     }
 
+    @Transactional
     @DeleteMapping("exercises/exercise/{exerciseId}")
     public ResponseEntity<Void> deleteExercise(@RequestHeader("Authorization") String authorizationHeader,
                                                @PathVariable Long exerciseId) {
@@ -163,9 +180,10 @@ public class ExercisesController {
         try {
             UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
             if (isNull(user)) {
-                log.error("ExercisesController::createSuperset ERROR : User not found!");
+                log.error("ExercisesController::deleteExercise ERROR : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
+            userExerciseRepository.deleteByExercise_Id(exerciseId);
             exerciseService.deleteExercise(exerciseId, user.getId());
 
             log.info("ExercisesController::deleteExercise STOP");
@@ -179,9 +197,9 @@ public class ExercisesController {
     }
 
     @PutMapping("exercises/exercise")
-    public ResponseEntity<ExercisesDto> updateExercise(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody CreateExerciseWrapper createExerciseWrapper) {
-        log.info("ExercisesController::updateExercise START, exerciseDto = {}", createExerciseWrapper.getExercise());
+    public ResponseEntity<ExerciseWrapperDto> updateExercise(@RequestHeader("Authorization") String authorizationHeader,
+                                                       @RequestBody ExerciseWrapperDto exerciseWrapperDto) {
+        log.info("ExercisesController::updateExercise START, exerciseWrapperDto = {}", exerciseWrapperDto.toString());
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
@@ -189,28 +207,15 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        ExercisesEntity currentExercise = exerciseService.getExerciseByUserAndId(userToken.getId(), createExerciseWrapper.getExercise().getId()).orElse(null);
+        ExercisesEntity currentExercise = exerciseService.getExerciseByUserAndId(userToken.getId(), exerciseWrapperDto.getExercise().getId()).orElse(null);
         if (isNull(currentExercise)) {
             log.error("ExercisesController::updateExercise ERROR : Exercise not found!");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        currentExercise.setName(createExerciseWrapper.getExercise().getName());
-        currentExercise.setDescription(createExerciseWrapper.getExercise().getDescription());
-        currentExercise.setMuscleGroup(createExerciseWrapper.getExercise().getMuscleGroup());
-        currentExercise.setDifficultyLevel(createExerciseWrapper.getExercise().getDifficultyLevel());
-        currentExercise.setVideoUrl(createExerciseWrapper.getExercise().getVideoUrl());
-        ExercisesEntity savedExercise = exerciseService.updateExercise(currentExercise);
 
-        ExercisesDto output = ExercisesDto.builder()
-                .id(savedExercise.getId())
-                .name(savedExercise.getName())
-                .description(savedExercise.getDescription())
-                .muscleGroup(savedExercise.getMuscleGroup())
-                .difficultyLevel(savedExercise.getDifficultyLevel())
-                .videoUrl(savedExercise.getVideoUrl())
-                .rate(savedExercise.getRate())
-                .build();
-        log.info("ExercisesController::updateExercise STOP, exerciseEntity = {}", output.toString());
+        ExerciseWrapperDto output = exerciseService.updateExercise(userToken.getId(), currentExercise, exerciseWrapperDto);
+
+        log.info("ExercisesController::updateExercise STOP, exerciseWrapperDto = {}", output.toString());
 
         return new ResponseEntity<>(output, HttpStatus.OK);
     }

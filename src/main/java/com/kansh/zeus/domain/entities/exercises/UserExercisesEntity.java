@@ -17,11 +17,7 @@ public class UserExercisesEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userExerciseId;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private UsersEntity user;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "exercise_id")
