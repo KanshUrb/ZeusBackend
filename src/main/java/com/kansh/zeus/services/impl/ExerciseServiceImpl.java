@@ -2,6 +2,8 @@ package com.kansh.zeus.services.impl;
 
 import com.kansh.zeus.domain.dto.exercises.ExerciseWrapperDto;
 import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetWrapperDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetsDto;
 import com.kansh.zeus.domain.dto.friends.FriendDto;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
@@ -201,8 +203,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         for (String sharedWithId : sharedWith) {
             userSupersetsEntities.add(UserSupersetsEntity.builder()
                     .superset(savedSuperset)
-                    .user(user)
-                    .sharedWith(UsersEntity.builder().id(sharedWithId).build())
+                    .sharedWith(userRepository.findByHash(sharedWithId).orElseThrow())
                     .build());
         }
         log.info("userSupersetsEntities: {}", userSupersetsEntities);
@@ -223,11 +224,43 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public SupersetsEntity updateSuperset(SupersetsEntity supersetsEntity) {
+    @Transactional
+    public SupersetWrapperDto updateSuperset(String userId, SupersetsEntity superset, SupersetWrapperDto supersetWrapperDto) {
         log.info("ExerciseService::updateSuperset START");
-        SupersetsEntity updatedSuperset = supersetRepository.save(supersetsEntity);
-        log.info("ExerciseService::updateSuperset STOP");
-        return updatedSuperset;
+
+        superset.setName(supersetWrapperDto.getSuperset().getName());
+        superset.setExercise1(exerciseRepository.findById(supersetWrapperDto.getSuperset().getExercise1()).orElseThrow());
+        superset.setExercise2(exerciseRepository.findById(supersetWrapperDto.getSuperset().getExercise2()).orElseThrow());
+        SupersetsEntity savedSuperset = supersetRepository.save(superset);
+
+        List<UsersEntity> userSupersetsEntities = getSharedWith(2, superset.getId());
+        Set<String> currentUserHashes = userSupersetsEntities.stream().map(UsersEntity::getHash).collect(Collectors.toSet());
+        Set<String> newUserHashes = supersetWrapperDto.getSharedWith().stream().map(FriendDto::getHash).collect(Collectors.toSet());
+
+        currentUserHashes.stream()
+                .filter(hash -> !newUserHashes.contains(hash))
+                .forEach(hash -> userSupersetRepository.deleteBySuperset_IdAndSharedWith_Hash(savedSuperset.getId(), hash));
+
+        newUserHashes.stream()
+                .filter(hash -> !currentUserHashes.contains(hash))
+                .forEach(hash -> userSupersetRepository.save(UserSupersetsEntity.builder()
+                        .superset(savedSuperset)
+                        .sharedWith(userRepository.findByHash(hash).orElseThrow())
+                        .build()));
+
+        SupersetWrapperDto output = SupersetWrapperDto.builder()
+                .superset(SupersetsDto.builder()
+                        .id(savedSuperset.getId())
+                        .name(savedSuperset.getName())
+                        .exercise1(savedSuperset.getExercise1().getId())
+                        .exercise2(savedSuperset.getExercise2().getId())
+                        .rate(savedSuperset.getRate())
+                        .build())
+                .sharedWith(supersetWrapperDto.getSharedWith())
+                .build();
+
+        log.info("ExerciseService::updateSuperset STOP, supersetWrapperDto = {}", output);
+        return output;
     }
 
     @Override

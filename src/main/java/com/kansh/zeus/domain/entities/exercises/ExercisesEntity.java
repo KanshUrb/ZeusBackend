@@ -47,9 +47,6 @@ public class ExercisesEntity {
     @JoinColumn(name = "created_by")
     private UsersEntity createdBy;
 
-    @OneToMany(mappedBy = "exercise")
-    private Set<UserExercisesEntity> userExercises;
-
     @PrePersist
     @PostLoad
     private void ensureExerciseRateNotNull() {

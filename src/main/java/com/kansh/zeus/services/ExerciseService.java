@@ -1,6 +1,7 @@
 package com.kansh.zeus.services;
 
 import com.kansh.zeus.domain.dto.exercises.ExerciseWrapperDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetWrapperDto;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
@@ -36,7 +37,7 @@ public interface ExerciseService {
 
     void deleteSuperset(Long supersetId, String userId);
 
-    SupersetsEntity updateSuperset(SupersetsEntity supersetsEntity);
+    SupersetWrapperDto updateSuperset(String userId, SupersetsEntity superset, SupersetWrapperDto supersetWrapperDto);
 
     Float rateExercise(Long exerciseId, Integer rate);
 

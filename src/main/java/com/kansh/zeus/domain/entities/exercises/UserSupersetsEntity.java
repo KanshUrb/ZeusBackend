@@ -22,10 +22,6 @@ public class UserSupersetsEntity {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private UsersEntity user;
-
-    @ManyToOne
     @JoinColumn(name = "supersets_id")
     private SupersetsEntity superset;
 

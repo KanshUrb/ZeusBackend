@@ -6,11 +6,11 @@ import com.kansh.zeus.domain.dto.users.UserTokenDto;
 import com.kansh.zeus.domain.dto.exercises.*;
 import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
 import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
-import com.kansh.zeus.domain.entities.exercises.UserExercisesEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
 import com.kansh.zeus.mappers.Mapper;
 import com.kansh.zeus.mappers.impl.UserEntityToFriendDtoMapper;
 import com.kansh.zeus.repositories.exercises.UserExerciseRepository;
+import com.kansh.zeus.repositories.exercises.UserSupersetRepository;
 import com.kansh.zeus.repositories.users.UserRepository;
 import com.kansh.zeus.services.ExerciseService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
@@ -47,6 +45,7 @@ public class ExercisesController {
 
     private final ValidateToken validateToken;
     private final UserExerciseRepository userExerciseRepository;
+    private final UserSupersetRepository userSupersetRepository;
 
     @Autowired
     public ExercisesController(ExerciseService exerciseService,
@@ -54,7 +53,7 @@ public class ExercisesController {
                                ValidateToken validateToken,
                                Mapper<ExercisesEntity, ExercisesDto> exercisesMapper,
                                Mapper<SupersetsEntity, SupersetsDto> supersetsMapper,
-                               UserEntityToFriendDtoMapper userEntityToFriendDtoMapper, UserExerciseRepository userExerciseRepository) {
+                               UserEntityToFriendDtoMapper userEntityToFriendDtoMapper, UserExerciseRepository userExerciseRepository, UserSupersetRepository userSupersetRepository) {
         this.exerciseService = exerciseService;
         this.userRepository = userRepository;
         this.validateToken = validateToken;
@@ -62,6 +61,7 @@ public class ExercisesController {
         this.supersetsMapper = supersetsMapper;
         this.userEntityToFriendDtoMapper = userEntityToFriendDtoMapper;
         this.userExerciseRepository = userExerciseRepository;
+        this.userSupersetRepository = userSupersetRepository;
     }
 
     @GetMapping("/exercises/summaries")
@@ -311,8 +311,8 @@ public class ExercisesController {
 
     @PostMapping("supersets/superset")
     public ResponseEntity<SupersetsDto> createSuperset(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody CreateSupersetWrapper wrapper) {
-        log.info("ExercisesController::createSuperset START");
+                                                       @RequestBody SupersetWrapperDto wrapper) {
+        log.info("ExercisesController::createSuperset START, supersetWrapperDto = {}", wrapper);
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
@@ -321,28 +321,31 @@ public class ExercisesController {
         }
 
         SupersetsDto superset = wrapper.getSuperset();
-        List<String> sharedWith = wrapper.getSharedWith();
+        List<FriendDto> sharedWith = wrapper.getSharedWith();
         try {
             UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
             if (isNull(user)) {
                 log.error("ExercisesController::createSuperset ERROR : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-
-            SupersetsEntity supersetEntity = supersetsMapper.mapFrom(superset);
-            supersetEntity.setCreatedBy(user);
-            supersetEntity.setExercise1(exerciseService.getExerciseByUserAndId(userToken.getId(), superset.getExercise1()).get());
-            supersetEntity.setExercise2(exerciseService.getExerciseByUserAndId(userToken.getId(), superset.getExercise2()).get());
             log.info("ExercisesController::addSuperset superset = {}, user = {}, sharedWith = {}", superset.toString(), user, sharedWith);
-            SupersetsEntity savedSuperset = exerciseService.createSuperset(supersetEntity, user, sharedWith);
-            log.info("ExercisesController::createSuperset STOP superset = {}", savedSuperset);
+            SupersetsEntity supersetEntity = SupersetsEntity.builder()
+                    .name(superset.getName())
+                    .exercise1(exerciseService.getExerciseById(superset.getExercise1()).orElse(null))
+                    .exercise2(exerciseService.getExerciseById(superset.getExercise2()).orElse(null))
+                    .rate(superset.getRate())
+                    .build();
+
+            supersetEntity = exerciseService.createSuperset(supersetEntity, user, sharedWith.stream().map(FriendDto::getHash).toList());
+
+            log.info("ExercisesController::createSuperset STOP superset = {}", supersetEntity);
             SupersetsDto output = SupersetsDto.builder()
-                    .id(savedSuperset.getId())
-                    .name(savedSuperset.getName())
-                    .exercise1(savedSuperset.getExercise1().getId())
-                    .exercise2(savedSuperset.getExercise2().getId())
-                    .rate(savedSuperset.getRate())
-                    .userCounter(savedSuperset.getUserCounter())
+                    .id(supersetEntity.getId())
+                    .name(supersetEntity.getName())
+                    .exercise1(supersetEntity.getExercise1().getId())
+                    .exercise2(supersetEntity.getExercise2().getId())
+                    .rate(supersetEntity.getRate())
+                    .userCounter(supersetEntity.getUserCounter())
                     .build();
             return new ResponseEntity<>(output, HttpStatus.OK);
         } catch (Exception e) {
@@ -365,10 +368,10 @@ public class ExercisesController {
         try {
             UsersEntity user = userRepository.findById(userToken.getId()).orElse(null);
             if (isNull(user)) {
-                log.error("ExercisesController::createSuperset ERROR : User not found!");
+                log.error("ExercisesController::deleteSuperset ERROR : User not found!");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-
+            userSupersetRepository.deleteBySuperset_Id(supersetId);
             exerciseService.deleteSuperset(supersetId, user.getId());
         } catch (Exception e) {
             log.error("ExercisesController::deleteSuperset ERROR error = {}", e.getMessage());
@@ -380,8 +383,8 @@ public class ExercisesController {
     }
 
     @PutMapping("supersets/superset")
-    public ResponseEntity<SupersetsDto> updateSuperset(@RequestHeader("Authorization") String authorizationHeader,
-                                                       @RequestBody CreateSupersetWrapper supersetsWrapper) {
+    public ResponseEntity<SupersetWrapperDto> updateSuperset(@RequestHeader("Authorization") String authorizationHeader,
+                                                       @RequestBody SupersetWrapperDto supersetsWrapper) {
         log.info("ExercisesController::updateSuperset START, supersetDto = {}", supersetsWrapper.getSuperset());
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -396,19 +399,8 @@ public class ExercisesController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        currentSuperset.setName(supersetsWrapper.getSuperset().getName());
-        currentSuperset.setExercise1(exerciseService.getExerciseByUserAndId(userToken.getId(), supersetsWrapper.getSuperset().getExercise1()).get());
-        currentSuperset.setExercise2(exerciseService.getExerciseByUserAndId(userToken.getId(), supersetsWrapper.getSuperset().getExercise2()).get());
-        SupersetsEntity savedSuperset = exerciseService.updateSuperset(currentSuperset);
+        SupersetWrapperDto output = exerciseService.updateSuperset(userToken.getId(), currentSuperset, supersetsWrapper);
 
-        SupersetsDto output = SupersetsDto.builder()
-                .id(savedSuperset.getId())
-                .name(savedSuperset.getName())
-                .exercise1(savedSuperset.getExercise1().getId())
-                .exercise2(savedSuperset.getExercise2().getId())
-                .rate(savedSuperset.getRate())
-                .userCounter(savedSuperset.getUserCounter())
-                .build();
         log.info("ExercisesController::updateSuperset STOP, exerciseEntity = {}", output.toString());
 
         return new ResponseEntity<>(output, HttpStatus.OK);

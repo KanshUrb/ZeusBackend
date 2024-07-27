@@ -1,6 +1,6 @@
 package com.kansh.zeus.domain.dto.exercises;
 
-import com.kansh.zeus.domain.dto.users.UsersDto;
+import com.kansh.zeus.domain.dto.friends.FriendDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,9 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CreateSupersetWrapper {
+public class SupersetWrapperDto {
 
     private SupersetsDto superset;
 
-    private List<String> sharedWith;
+    private List<FriendDto> sharedWith;
 }
