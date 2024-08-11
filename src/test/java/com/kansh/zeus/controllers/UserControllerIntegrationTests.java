@@ -75,7 +75,7 @@ public class UserControllerIntegrationTests {
     public void testCheckIfUserExistsWithValidTokenAndUserDoesNotExist() throws Exception {
         when(validateToken.validateToken("Bearer validToken")).thenReturn(validUserToken);
         when(userService.checkIfUserExists(validUserToken.getId())).thenReturn(false);
-        when(userService.registerUser(validUserToken, "John", "Doe", 1)).thenReturn(usersEntity);
+        when(userService.registerUser(validUserToken, "John", "Doe", 1, "123")).thenReturn(usersEntity);
         when(userMapper.mapTo(usersEntity)).thenReturn(usersDto);
 
         String jsonContent = "{ \"firstName\": \"John\", \"lastName\": \"Doe\", \"gender\": 1 }";

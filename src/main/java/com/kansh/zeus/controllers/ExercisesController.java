@@ -300,6 +300,7 @@ public class ExercisesController {
                     .exercise2(exercisesMapper.mapTo(supersetEntity.getExercise2()))
                     .rate(supersetEntity.getRate())
                     .userCounter(supersetEntity.getUserCounter())
+                    .createdBy(supersetEntity.getCreatedBy().getId())
                     .build();
 
             SupersetDetailsDto output = SupersetDetailsDto.builder()

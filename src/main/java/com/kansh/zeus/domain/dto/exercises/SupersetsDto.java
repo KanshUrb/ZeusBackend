@@ -23,4 +23,5 @@ public class SupersetsDto {
 
     private Integer userCounter;
 
+    private String createdBy;
 }

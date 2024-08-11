@@ -18,6 +18,7 @@ import com.kansh.zeus.repositories.trainings.TrainingItemRepository;
 import com.kansh.zeus.repositories.trainings.TrainingItemSeriesRepository;
 import com.kansh.zeus.repositories.trainings.TrainingRepository;
 import com.kansh.zeus.repositories.trainings.UserTrainingsRepository;
+import com.kansh.zeus.repositories.users.UserRepository;
 import com.kansh.zeus.services.TrainingService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +44,9 @@ public class TrainingServiceImpl implements TrainingService {
     private final SupersetRepository supersetRepository;
     private final TrainingItemSeriesRepository trainingItemSeriesRepository;
     private final Mapper<ExercisesEntity, ExercisesDto> exerciseMapper;
+    private final UserRepository userRepository;
 
-    public TrainingServiceImpl(TrainingRepository trainingRepository, UserTrainingsRepository userTrainingsRepository, ExerciseRepository exerciseRepository, SupersetRepository supersetRepository, TrainingItemRepository trainingItemRepository, TrainingItemSeriesRepository trainingItemSeriesRepository, Mapper<ExercisesEntity, ExercisesDto> exerciseMapper) {
+    public TrainingServiceImpl(TrainingRepository trainingRepository, UserTrainingsRepository userTrainingsRepository, ExerciseRepository exerciseRepository, SupersetRepository supersetRepository, TrainingItemRepository trainingItemRepository, TrainingItemSeriesRepository trainingItemSeriesRepository, Mapper<ExercisesEntity, ExercisesDto> exerciseMapper, UserRepository userRepository) {
         this.trainingRepository = trainingRepository;
         this.trainingItemRepository = trainingItemRepository;
         this.userTrainingsRepository = userTrainingsRepository;
@@ -52,6 +54,7 @@ public class TrainingServiceImpl implements TrainingService {
         this.supersetRepository = supersetRepository;
         this.trainingItemSeriesRepository = trainingItemSeriesRepository;
         this.exerciseMapper = exerciseMapper;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -148,7 +151,7 @@ public class TrainingServiceImpl implements TrainingService {
             userTrainingsEntities.add(UserTrainingsEntity.builder()
                     .user(user)
                     .training(savedTraining)
-                    .sharedWith(UsersEntity.builder().id(sharedWithId).build())
+                    .sharedWith(userRepository.findByHash(sharedWithId).orElseThrow())
                     .build());
         }
         log.info("userTrainingsEntities: {}", userTrainingsEntities);

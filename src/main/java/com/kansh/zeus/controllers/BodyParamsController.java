@@ -129,10 +129,10 @@ public class BodyParamsController {
     }
 
     @PutMapping(value = "/bodyParams/{bodyParamId}")
-    public ResponseEntity<Void> updateBodyParamsForUser(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<BodyParamsDto> updateBodyParamsForUser(@RequestHeader("Authorization") String authorizationHeader,
                                                         @PathVariable Long bodyParamId,
                                                         @RequestBody BodyParamsDto bodyParamsDto) {
-        log.info("BodyPramsController::updateBodyParamsForUser START");
+        log.info("BodyPramsController::updateBodyParamsForUser START, bodyParamsDto = {}", bodyParamsDto);
         log.info("BodyPramsController::updateBodyParamsForUser userId = {}, newBodyParams = {}", bodyParamId, bodyParamsDto.toString());
         log.info(authorizationHeader);
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -140,7 +140,7 @@ public class BodyParamsController {
             log.error("BodyPramsController::updateBodyParamsForUser ERROR : Invalid authorization header!");
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-
+        BodyParamsEntity savedBodyParamsEntity;
         try {
             if (!bodyParamService.isExists(bodyParamId)) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -154,7 +154,7 @@ public class BodyParamsController {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
             bodyParamsEntity.setUser(user);
-            BodyParamsEntity savedBodyParamsEntity = bodyParamService.saveBodyParams(bodyParamsEntity);
+            savedBodyParamsEntity = bodyParamService.saveBodyParams(bodyParamsEntity);
             if (isNull(savedBodyParamsEntity)) {
                 log.info("BodyPramsController::updateBodyParamsForUser STOP response = BAD_REQUEST");
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -164,7 +164,7 @@ public class BodyParamsController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(bodyParamsMapper.mapTo(savedBodyParamsEntity), HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/bodyParams/{bodyParamId}")

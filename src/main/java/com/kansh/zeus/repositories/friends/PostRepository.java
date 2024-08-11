@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<PostEntity, Long> {
-    @Query("SELECT p FROM PostEntity p WHERE p.createdBy.id IN :usersId")
+    @Query("SELECT p FROM PostEntity p WHERE p.createdBy.id IN :usersId ORDER BY p.createdAt DESC")
     Page<PostEntity> findAllByCreatedByIn(@Param("usersId") List<String> usersId, Pageable pageable);
 
 }

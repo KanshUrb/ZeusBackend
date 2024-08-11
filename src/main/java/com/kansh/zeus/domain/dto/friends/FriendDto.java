@@ -17,4 +17,6 @@ public class FriendDto {
 
     private String lastName;
 
+    private String photo;
+
 }

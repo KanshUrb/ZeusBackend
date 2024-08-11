@@ -23,4 +23,6 @@ public class SupersetOutputDto {
 
     private Integer userCounter;
 
+    private String createdBy;
+
 }

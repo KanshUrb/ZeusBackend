@@ -27,4 +27,6 @@ public class ExercisesDto {
 
     private Integer userCounter;
 
+    private String createdBy;
+
 }

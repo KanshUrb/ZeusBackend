@@ -6,6 +6,8 @@ import com.kansh.zeus.domain.entities.friends.PostEntity;
 import com.kansh.zeus.domain.entities.users.UsersEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.util.Pair;
+
 import java.util.List;
 
 public interface SocialMediaService {
@@ -16,9 +18,9 @@ public interface SocialMediaService {
     PostEntity createPost(UsersEntity user, String postContent);
     PostEntity getPostById(Long postId);
     Page<PostEntity> getPosts(String userId, Pageable pageable);
-    PostEntity updatePost(Long postId, PostEntity postEntity);
+    PostEntity updatePost(Long postId, String postContent);
     void deletePost(Long postId);
-    void likePost(Long postId, String userId);
+    Pair<Integer, Boolean> likePost(Long postId, String userId);
     void unlikePost(Long postId, String userId);
     void commentOnPost(Long postId, PostCommentEntity commentEntity);
     List<PostCommentEntity> getCommentsForPost(Long postId);

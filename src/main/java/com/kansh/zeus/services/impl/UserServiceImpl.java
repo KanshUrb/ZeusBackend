@@ -33,8 +33,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UsersEntity registerUser(UserTokenDto userToken, String firstName, String lastName, Integer gender) {
-        log.info("POJEBIE MNIE");
+    public UsersEntity registerUser(UserTokenDto userToken, String firstName, String lastName, Integer gender, String photo) {
         try {
             String hash;
             do {
@@ -48,7 +47,7 @@ public class UserServiceImpl implements UserService {
                     .lastName(lastName)
                     .gender(gender)
                     .hash(hash)
-                    .photo(userToken.getPhoto())
+                    .photo(photo)
                     .build());
 
         } catch (Exception e) {

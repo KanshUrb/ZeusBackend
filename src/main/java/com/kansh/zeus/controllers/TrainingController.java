@@ -45,7 +45,7 @@ public class TrainingController {
     @PostMapping("/training")
     public ResponseEntity<TrainingsDto> createTraining(@RequestHeader("Authorization") String authorization,
                                                        @RequestBody TrainingInputWrapperDto trainingWrapper) {
-        log.info("TrainingController::createTraining START");
+        log.info("TrainingController::createTraining START, trainingWrapper = {}", trainingWrapper);
 
         UserTokenDto userToken = validateToken.validateToken(authorization);
         if (isNull(userToken)) {

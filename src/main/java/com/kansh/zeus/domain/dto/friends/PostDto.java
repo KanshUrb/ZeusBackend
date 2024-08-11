@@ -20,9 +20,16 @@ public class PostDto {
 
     private Timestamp createdAt;
 
+    private String createdByFirstName;
+
+    private String createdByLastName;
+
+    private String createdByPhoto;
+
+    private String createdById;
+
     private Integer likesCount;
 
-    private Set<PostLikeDto> likes;
+    private Boolean isLiked;
 
-    private Set<PostCommentDto> comments;
 }

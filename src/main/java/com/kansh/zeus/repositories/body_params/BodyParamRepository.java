@@ -11,5 +11,5 @@ public interface BodyParamRepository extends JpaRepository<BodyParamsEntity, Lon
 
     Optional<BodyParamsEntity> findByIdAndUserId(Long id, String userId);
 
-    List<BodyParamsEntity> findAllByUserId(String userId);
+    List<BodyParamsEntity> findAllByUserIdOrderByIdDesc(String userId);
 }

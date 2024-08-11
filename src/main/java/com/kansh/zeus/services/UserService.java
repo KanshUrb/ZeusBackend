@@ -9,6 +9,6 @@ public interface UserService {
 
     UsersEntity loginUser(String userId);
 
-    UsersEntity registerUser(UserTokenDto userToken, String firstName, String lastName, Integer gender);
+    UsersEntity registerUser(UserTokenDto userToken, String firstName, String lastName, Integer gender, String photo);
 
 }

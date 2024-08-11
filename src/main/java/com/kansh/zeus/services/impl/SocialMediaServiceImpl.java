@@ -15,6 +15,7 @@ import com.kansh.zeus.services.SocialMediaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,14 +98,15 @@ public class SocialMediaServiceImpl implements SocialMediaService {
     public Page<PostEntity> getPosts(String userId, Pageable pageable) {
         List<FriendEntity> friends = friendRepository.findAllByUserId(userId);
         List<String> friendIds = friends.stream().map(friend -> friend.getFriend().getId()).collect(Collectors.toList());
+        friendIds.add(userId);
         return postRepository.findAllByCreatedByIn(friendIds, pageable);
     }
 
     @Override
     @Transactional
-    public PostEntity updatePost(Long postId, PostEntity postEntity) {
+    public PostEntity updatePost(Long postId, String postContent) {
         PostEntity existingPost = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
-        existingPost.setContent(postEntity.getContent());
+        existingPost.setContent(postContent);
         return postRepository.save(existingPost);
     }
 
@@ -116,16 +118,33 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
     @Override
     @Transactional
-    public void likePost(Long postId, String userId) {
+    public Pair<Integer, Boolean> likePost(Long postId, String userId) {
+        log.info("test1");
         if (!postLikeRepository.existsByPostIdAndUserId(postId, userId)) {
+            log.info("test2");
             PostLikeEntity like = new PostLikeEntity();
             like.setPost(postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found")));
+            log.info("test3");
             like.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")));
+            log.info("test4");
             postLikeRepository.save(like);
-
+            log.info("test5");
             PostEntity post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
-            post.setLikesCount(postLikeRepository.countByPostId(postId).intValue());
-            postRepository.save(post);
+            log.info("test6");
+            log.info(post.toString());
+            int likesCount = postLikeRepository.countByPostId(postId).intValue();
+            post.setLikesCount(likesCount);
+            log.info("test7");
+            return Pair.of(likesCount, true);
+        } else {
+            log.info("test8");
+            postLikeRepository.deleteByPostIdAndUserId(postId, userId);
+            log.info("test9");
+            PostEntity post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+            int likesCount = postLikeRepository.countByPostId(postId).intValue();
+            post.setLikesCount(likesCount);
+            return Pair.of(likesCount, false);
+
         }
     }
 

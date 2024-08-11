@@ -33,49 +33,68 @@ public class UserController {
     }
 
     @PostMapping(value = "/login")
-    public ResponseEntity<UsersDto> checkIfUserExists(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<UsersDto> login(@RequestHeader("Authorization") String authorizationHeader,
                                                       @RequestBody Map<String, Object> requestBody) {
-        log.info("UserController:checkIfUserExist START");
+        log.info("UserController:login START");
         log.info(requestBody.toString());
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if(validateToken.validateToken(authorizationHeader) == null) {
-            log.error("UserController:checkIfUserExists ERROR : Invalid authorization header!");
+            log.error("UserController:login ERROR : Invalid authorization header!");
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         if (userService.checkIfUserExists(userToken.getId())) {
-            log.info("UserController:checkIfUserExists: try to log in");
+            log.info("UserController:login: try to log in");
 
             try {
                 UsersEntity userEntity = userService.loginUser(userToken.getId());
-                if(userEntity.getPhoto() == null) userEntity.setPhoto("https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U");
                 UsersDto userDto = userMapper.mapTo(userEntity);
-                log.info("UserController:checkIfUserExists: STOP logging successful userDto: {}", userDto);
+                log.info("UserController:login: STOP logging successful userDto: id = {}, firstName = {}, lastName = {}, photo = {}", userDto.getId(), userDto.getFirstName(), userDto.getLastName(), userDto.getPhoto().substring(0, 10));
                 return new ResponseEntity<>(userDto, HttpStatus.OK);
             } catch (Exception e) {
-                log.info("UserController:checkIfUserExists: ERROR while logging {}", e.getMessage());
+                log.info("UserController:login: ERROR while logging {}", e.getMessage());
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } else {
-            log.info("UserController:checkIfUserExists: try to register");
+            log.info("UserController:login: try to register");
 
             try {
                 log.info(requestBody.toString());
                 UsersEntity userEntity = userService.registerUser(userToken,
                         requestBody.get("firstName").toString(),
                         requestBody.get("lastName").toString(),
-                        Integer.parseInt(requestBody.get("gender").toString()));
+                        Integer.parseInt(requestBody.get("gender").toString()),
+                        requestBody.get("photo").toString());
 
-                if(userEntity.getPhoto() == null) userEntity.setPhoto("https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U");
                 UsersDto userDto = userMapper.mapTo(userEntity);
-                log.info("UserController:checkIfUserExists: STOP register successful userDto: {}", userDto);
+                log.info("UserController:login: STOP register successful userDto: id = {}, firstName = {}, lastName = {}, photo = {}", userDto.getId(), userDto.getFirstName(), userDto.getLastName(), userDto.getPhoto().substring(0, 10));
                 return new ResponseEntity<>(userDto, HttpStatus.OK);
 
             } catch(Exception e) {
-                log.info("UserController:checkIfUserExists: ERROR while registering {}", e.getMessage());
+                log.info("UserController:login: ERROR while registering {}", e.getMessage());
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        }
+    }
+    @GetMapping(value = "/login")
+    public ResponseEntity<Boolean> checkIfUserExists(@RequestHeader("Authorization") String authorizationHeader) {
+        log.info("UserController:getUserData START");
+
+        UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
+        if(validateToken.validateToken(authorizationHeader) == null) {
+            log.error("UserController:getUsere ERROR : Invalid authorization header!");
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        try {
+            boolean user = userService.checkIfUserExists(userToken.getId());
+            log.info("UserController:getUserData STOP user exist: {}", user);
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+        catch (Exception e) {
+            log.info("UserController:getUserData: ERROR while logging {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

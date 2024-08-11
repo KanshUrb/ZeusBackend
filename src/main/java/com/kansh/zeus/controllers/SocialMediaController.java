@@ -5,6 +5,7 @@ import com.kansh.zeus.domain.dto.friends.FriendDto;
 import com.kansh.zeus.domain.dto.friends.PostCommentDto;
 import com.kansh.zeus.domain.dto.friends.PostDto;
 import com.kansh.zeus.domain.dto.exercises.PageDto;
+import com.kansh.zeus.domain.dto.friends.PostLikeDto;
 import com.kansh.zeus.domain.dto.users.UserTokenDto;
 import com.kansh.zeus.domain.dto.users.UsersDto;
 import com.kansh.zeus.domain.entities.friends.FriendEntity;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -77,6 +79,7 @@ public class SocialMediaController {
                     .hash(addedFriend.getFriend().getHash())
                     .firstName(addedFriend.getFriend().getFirstName())
                     .lastName(addedFriend.getFriend().getLastName())
+                    .photo(addedFriend.getFriend().getPhoto())
                     .build();
             log.info("SocialMediaController::addFriend STOP addedFriend = {}", addedFriend);
             return new ResponseEntity<>(addedFriendDto, HttpStatus.OK);
@@ -129,6 +132,7 @@ public class SocialMediaController {
                     .hash(e.getFriend().getHash())
                     .firstName(e.getFriend().getFirstName())
                     .lastName(e.getFriend().getLastName())
+                    .photo(e.getFriend().getPhoto())
                     .build()
             ).toList();
             log.info("SocialMediaController::getFriends STOP, friends = {}", friendDto);
@@ -159,7 +163,6 @@ public class SocialMediaController {
             PostEntity postEntity = socialMediaService.createPost(user, content);
             log.info("SocialMediaController::createPost STOP");
             PostDto postDto = postMapper.mapTo(postEntity);
-            log.info(postDto.toString());
             return new ResponseEntity<>(postDto, HttpStatus.OK);
         } catch (Exception e) {
             log.error("SocialMediaController::createPost ERROR", e);
@@ -193,7 +196,6 @@ public class SocialMediaController {
                                                      @RequestParam(defaultValue = "0") int page,
                                                      @RequestParam(defaultValue = "10") int size) {
         log.info("SocialMediaController::getPosts START");
-
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
             log.error("SocialMediaController::getPosts ERROR: Invalid authorization header!");
@@ -224,7 +226,7 @@ public class SocialMediaController {
     @PutMapping("/posts/{postId}")
     public ResponseEntity<PostDto> updatePost(@RequestHeader("Authorization") String authorizationHeader,
                                               @PathVariable Long postId,
-                                              @RequestBody PostDto postDto) {
+                                              @RequestBody String content) {
         log.info("SocialMediaController::updatePost START");
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
@@ -234,7 +236,7 @@ public class SocialMediaController {
         }
 
         try {
-            PostEntity updatedPost = socialMediaService.updatePost(postId, postMapper.mapFrom(postDto));
+            PostEntity updatedPost = socialMediaService.updatePost(postId, content);
             log.info("SocialMediaController::updatePost STOP");
             return new ResponseEntity<>(postMapper.mapTo(updatedPost), HttpStatus.OK);
         } catch (Exception e) {
@@ -265,9 +267,9 @@ public class SocialMediaController {
     }
 
     @PostMapping("/posts/{postId}/like")
-    public ResponseEntity<Void> likePost(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<PostLikeDto> likePost(@RequestHeader("Authorization") String authorizationHeader,
                                          @PathVariable Long postId) {
-        log.info("SocialMediaController::likePost START");
+        log.info("SocialMediaController::likePost START, postId = {}", postId);
 
         UserTokenDto userToken = validateToken.validateToken(authorizationHeader);
         if (isNull(userToken)) {
@@ -276,9 +278,12 @@ public class SocialMediaController {
         }
 
         try {
-            socialMediaService.likePost(postId, userToken.getId());
-            log.info("SocialMediaController::likePost STOP");
-            return new ResponseEntity<>(HttpStatus.OK);
+            Pair<Integer, Boolean> postLikes = socialMediaService.likePost(postId, userToken.getId());
+            PostLikeDto output = PostLikeDto.builder()
+                    .likesCount(postLikes.getFirst())
+                    .build();
+            log.info("SocialMediaController::likePost STOP, output = {}", output);
+            return new ResponseEntity<>(output, HttpStatus.OK);
         } catch (Exception e) {
             log.error("SocialMediaController::likePost ERROR", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -357,7 +362,7 @@ public class SocialMediaController {
         }
     }
 
-    @DeleteMapping("/posts/{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(@RequestHeader("Authorization") String authorizationHeader,
                                               @PathVariable Long commentId) {
         log.info("SocialMediaController::deleteComment START");

@@ -35,7 +35,7 @@ public class BodyParamServiceImpl implements BodyParamService {
 
     @Override
     public BodyParamsEntity saveBodyParams(BodyParamsEntity bodyParamsEntity) {
-        bodyParamsEntity.setDate(LocalDate.now());
+        bodyParamsEntity.setDate(bodyParamsEntity.getDate() == null ? LocalDate.now() : bodyParamsEntity.getDate());
         bodyParamsEntity.setBf(calculateBF(bodyParamsEntity.getUser().getGender(), bodyParamsEntity.getHeight(), bodyParamsEntity.getWaist(), bodyParamsEntity.getNeck(), bodyParamsEntity.getHip()));
         bodyParamsEntity.setLbm(calculateLBM(bodyParamsEntity.getWeight(), bodyParamsEntity.getBf()));
         bodyParamsEntity.setBmi(calculateBMI(bodyParamsEntity.getHeight(), bodyParamsEntity.getWeight()));
@@ -49,12 +49,13 @@ public class BodyParamServiceImpl implements BodyParamService {
 
     @Override
     public List<BodyParamsEntity> findAllBodyParamsForUser(String userId) {
-        return bodyParamRepository.findAllByUserId(userId);
+        return bodyParamRepository.findAllByUserIdOrderByIdDesc(userId);
     }
 
     @Override
     public Float calculateBMI(Integer height, Float weight) {
-        return weight / ((height / 100.0f) * (height / 100.0f));
+        float bmi = weight / ((height / 100.0f) * (height / 100.0f));
+        return bmi > 100 || bmi < 0 ? 0.0f : bmi;
     }
 
     @Override
@@ -65,10 +66,15 @@ public class BodyParamServiceImpl implements BodyParamService {
     @Override
     // 1 - male, 2 - female
     public Float calculateBF(Integer gender, Integer height, Float waist, Float neck, Float hip) {
+        float bf;
         if (gender == 1) {
-            return 86.010f * (float) Math.log10(waist - neck) - 70.041f * (float) Math.log10(height) + 36.76f;
+            bf =  86.010f * (float) Math.log10(waist - neck) - 70.041f * (float) Math.log10(height) + 36.76f;
         } else {
-            return 163.205f * (float) Math.log10(waist + hip - neck) - 97.684f * (float) Math.log10(height) - 78.387f;
+            bf = 163.205f * (float) Math.log10(waist + hip - neck) - 97.684f * (float) Math.log10(height) - 78.387f;
         }
+        if(bf < 0 || bf > 100) {
+            return 0.0f;
+        }
+        return bf;
     }
 }

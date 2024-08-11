@@ -3,7 +3,6 @@ package com.kansh.zeus.utils;
 import com.kansh.zeus.repositories.users.UserRepository;
 import org.springframework.stereotype.Component;
 import java.util.Random;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -24,15 +23,14 @@ public class HashGenerator {
             byte[] hashBytes = digest.digest(userId.getBytes());
             Random random = new Random();
 
-            StringBuilder hexString = new StringBuilder();
-            for (int i = 0; i < 5; i++) {
+            StringBuilder letterHash = new StringBuilder();
+            while (letterHash.length() < 6) {
                 int randomIndex = random.nextInt(hashBytes.length);
-                String hex = Integer.toHexString(0xff & hashBytes[randomIndex]);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
+                char letter = (char) ('a' + (Math.abs(hashBytes[randomIndex]) % 26));
+                letterHash.append(letter);
             }
 
-            return hexString.toString();
+            return letterHash.toString();
 
         } catch (NoSuchAlgorithmException e) {
             return null;
@@ -42,5 +40,4 @@ public class HashGenerator {
     public boolean checkIfHashIsAvailable(String hash) {
         return userRepository.checkIfHashIsAvailable(hash);
     }
-
 }
