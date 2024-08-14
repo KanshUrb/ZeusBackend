@@ -7,7 +7,6 @@ import com.kansh.zeus.domain.dto.friends.PostDto;
 import com.kansh.zeus.domain.dto.exercises.PageDto;
 import com.kansh.zeus.domain.dto.friends.PostLikeDto;
 import com.kansh.zeus.domain.dto.users.UserTokenDto;
-import com.kansh.zeus.domain.dto.users.UsersDto;
 import com.kansh.zeus.domain.entities.friends.FriendEntity;
 import com.kansh.zeus.domain.entities.friends.PostCommentEntity;
 import com.kansh.zeus.domain.entities.friends.PostEntity;

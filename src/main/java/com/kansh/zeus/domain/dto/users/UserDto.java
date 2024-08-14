@@ -9,15 +9,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UsersDto {
+public class UserDto {
 
     private String id;
-
     private String firstName;
-
     private String lastName;
-
     private String hash;
-
     private String photo;
+
 }

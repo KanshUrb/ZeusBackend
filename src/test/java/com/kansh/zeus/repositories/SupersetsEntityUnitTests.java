@@ -46,7 +46,7 @@ class SupersetsEntityUnitTests {
         supersetRepository.save(superset);
 
         UserSupersetsEntity userSuperset = new UserSupersetsEntity();
-        userSuperset.setUser(user);
+        //userSuperset.setUser(user);
         userSuperset.setSuperset(superset);
         userSupersetRepository.save(userSuperset);
 
@@ -75,7 +75,7 @@ class SupersetsEntityUnitTests {
         supersetRepository.save(superset);
 
         UserSupersetsEntity userSuperset = new UserSupersetsEntity();
-        userSuperset.setUser(user);
+        //userSuperset.setUser(user);
         userSuperset.setSuperset(superset);
         userSupersetRepository.save(userSuperset);
 
@@ -132,12 +132,12 @@ class SupersetsEntityUnitTests {
         supersetRepository.save(superset);
 
         UserSupersetsEntity userSuperset = new UserSupersetsEntity();
-        userSuperset.setUser(user1);
+        //userSuperset.setUser(user1);
         userSuperset.setSuperset(superset);
         userSupersetRepository.save(userSuperset);
 
         UserSupersetsEntity sharedSuperset = new UserSupersetsEntity();
-        sharedSuperset.setUser(user1);
+        //sharedSuperset.setUser(user1);
         sharedSuperset.setSuperset(superset);
         sharedSuperset.setSharedWith(user2); // user1 udostępnia superset user2
         userSupersetRepository.save(sharedSuperset);

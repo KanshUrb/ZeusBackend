@@ -16,17 +16,15 @@ public class ValidateToken {
     public UserTokenDto validateToken(String authorizationHeader) {
 
         String token = authorizationHeader.replace("Bearer ", "");
-        log.info("JWT Token: {}", token);
+        log.info("validateToken: JWT Token: {}", token);
 
         FirebaseToken decodedToken;
         try {
-            // verifies token to firebase server
             decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
         } catch (FirebaseAuthException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Error! " + e);
         }
 
-        // if token is invalid
         if (decodedToken == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token!");
         }

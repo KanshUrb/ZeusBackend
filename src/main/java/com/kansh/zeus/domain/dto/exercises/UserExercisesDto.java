@@ -1,6 +1,6 @@
 package com.kansh.zeus.domain.dto.exercises;
 
-import com.kansh.zeus.domain.dto.users.UsersDto;
+import com.kansh.zeus.domain.dto.users.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UserExercisesDto {
 
-    private UsersDto user;
+    private UserDto user;
 
     private ExercisesDto exercise;
 
-    private UsersDto sharedWith;
+    private UserDto sharedWith;
 }

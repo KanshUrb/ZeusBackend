@@ -1,7 +1,8 @@
 package com.kansh.zeus;
 
 import com.kansh.zeus.domain.dto.body_params.BodyParamsDto;
-import com.kansh.zeus.domain.dto.users.UsersDto;
+import com.kansh.zeus.domain.dto.users.UserDto;
+import com.kansh.zeus.domain.dto.users.UserInputDto;
 import com.kansh.zeus.domain.dto.users.UserTokenDto;
 import com.kansh.zeus.domain.dto.exercises.ExercisesDto;
 import com.kansh.zeus.domain.entities.body_params.BodyParamsEntity;
@@ -21,7 +22,7 @@ public class TestDataUtil {
     static final String EMAIL_A = "test@test.com";
     static final Integer GENDER_A = 1;
     static final String HASH_A = "12345678";
-    static final String PHOTO_A = "https://www.rmf.fm/_files/Short_foto/625/d78aacf19bad4c1621f05c32c1e81d54.jpg";
+    static final String PHOTO_A = "https://example.org/photo.jpg";
 
     static final LocalDate DATE_A_1 = LocalDate.parse("2023-01-01");
     static final Integer HEIGHT_A_1 = 180;
@@ -146,12 +147,21 @@ public class TestDataUtil {
                 .build();
     }
 
-    public static UsersDto createTestUserDtoA() {
-        return UsersDto.builder()
+    public static UserDto createTestUserDtoA() {
+        return UserDto.builder()
                 .id(ID_A)
                 .firstName(FIRST_NAME_A)
                 .lastName(LAST_NAME_A)
                 .hash(HASH_A)
+                .photo(PHOTO_A)
+                .build();
+    }
+
+    public static UserInputDto createTestUserInputDtoA() {
+        return UserInputDto.builder()
+                .firstName(FIRST_NAME_A)
+                .lastName(LAST_NAME_A)
+                .gender(GENDER_A)
                 .photo(PHOTO_A)
                 .build();
     }
@@ -177,8 +187,8 @@ public class TestDataUtil {
                 .build();
     }
 
-    public static UsersDto createTestUserDtoB() {
-        return UsersDto.builder()
+    public static UserDto createTestUserDtoB() {
+        return UserDto.builder()
                 .id(ID_B)
                 .firstName(FIRST_NAME_B)
                 .lastName(LAST_NAME_B)

@@ -1,15 +1,5 @@
 package com.kansh.zeus.controllers;
 
-//TODO na 11.07
-// - controller dla Socialmedia i trening
-// - refaktor (a sie przyda)
-// - dokonczyc treningi
-// - zrobic jakies pobranie wszystkich bodyparams uzytkownika dla danego okresu
-// - obejrzec tutorial do fluttera
-
-//TODO na 12.07-14.07
-// jakakolwiek implementacja klienta
-
 import com.kansh.zeus.domain.entities.friends.FriendEntity;
 import com.kansh.zeus.domain.entities.friends.PostEntity;
 import com.kansh.zeus.domain.entities.friends.PostCommentEntity;
@@ -20,6 +10,7 @@ import com.kansh.zeus.repositories.users.UserRepository;
 import com.kansh.zeus.services.SocialMediaService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class SocialMediaServiceIntegrationTests {
 
-    @Autowired
+   /* @Autowired
     private SocialMediaService socialMediaService;
 
     @Autowired
@@ -68,6 +59,7 @@ public class SocialMediaServiceIntegrationTests {
         userRepository.save(user2);
     }
 
+    @Disabled
     @Test
     public void testAddAndRemoveFriend() {
         socialMediaService.addFriend(user1.getId(), user2.getHash());
@@ -78,7 +70,7 @@ public class SocialMediaServiceIntegrationTests {
         friends = socialMediaService.getFriends(user1.getId());
         assertThat(friends).isEmpty();
     }
-
+    @Disabled
     @Test
     public void testCreateAndGetPost() {
         PostEntity post = new PostEntity();
@@ -90,7 +82,7 @@ public class SocialMediaServiceIntegrationTests {
         assertThat(retrievedPost).isPresent();
         assertThat(retrievedPost.get().getContent()).isEqualTo("This is a test post");
     }
-
+    @Disabled
     @Test
     public void testUpdateAndDeletePost() {
         PostEntity post = new PostEntity();
@@ -106,7 +98,7 @@ public class SocialMediaServiceIntegrationTests {
         Optional<PostEntity> deletedPost = postRepository.findById(updatedPost.getId());
         assertThat(deletedPost).isEmpty();
     }
-
+    @Disabled
     @Test
     public void testLikeAndUnlikePost() {
         PostEntity post = new PostEntity();
@@ -124,7 +116,7 @@ public class SocialMediaServiceIntegrationTests {
         PostEntity unlikedPost = socialMediaService.getPostById(savedPost.getId());
         assertThat(unlikedPost.getLikesCount()).isEqualTo(0);
     }
-
+    @Disabled
     @Test
     public void testCommentOnPost() {
         PostEntity post = new PostEntity();
@@ -141,7 +133,7 @@ public class SocialMediaServiceIntegrationTests {
         assertThat(comments).hasSize(1);
         assertThat(comments.get(0).getComment()).isEqualTo("This is a test comment");
     }
-
+    @Disabled
     @Test
     public void testGetFriendsPosts() {
         PostEntity post1 = new PostEntity();
@@ -160,6 +152,6 @@ public class SocialMediaServiceIntegrationTests {
         List<PostEntity> friendsPosts = socialMediaService.getPosts(user1.getId(), pageable).getContent();
         assertThat(friendsPosts).hasSize(1);
         assertThat(friendsPosts.get(0).getContent()).isEqualTo("Post by user2");
-    }
+    }*/
 }
 

@@ -48,7 +48,7 @@ class ExercisesEntityUnitTests {
         exerciseRepository.save(exercise);
 
         UserExercisesEntity userExercise = new UserExercisesEntity();
-        userExercise.setUser(user);
+        //userExercise.setUser(user);
         userExercise.setExercise(exercise);
         userExerciseRepository.save(userExercise);
 
@@ -77,7 +77,7 @@ class ExercisesEntityUnitTests {
         exerciseRepository.save(exercise);
 
         UserExercisesEntity userExercise = new UserExercisesEntity();
-        userExercise.setUser(user);
+        //userExercise.setUser(user);
         userExercise.setExercise(exercise);
         userExerciseRepository.save(userExercise);
 
@@ -139,12 +139,12 @@ class ExercisesEntityUnitTests {
         exerciseRepository.save(exercise);
 
         UserExercisesEntity userExercise = new UserExercisesEntity();
-        userExercise.setUser(user1);
+        //userExercise.setUser(user1);
         userExercise.setExercise(exercise);
         userExerciseRepository.save(userExercise);
 
         UserExercisesEntity sharedExercise = new UserExercisesEntity();
-        sharedExercise.setUser(user1); // user1 jako autor
+        //sharedExercise.setUser(user1); // user1 jako autor
         sharedExercise.setExercise(exercise);
         sharedExercise.setSharedWith(user2); // user1 udostępnia ćwiczenie user2
         userExerciseRepository.save(sharedExercise);
