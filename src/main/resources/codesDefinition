@@ -1,9 +1,0 @@
-checkIfUserExist:
-    - 201 - Znaleziono utworzone konto usera w DB
-    - 401 - User nie utworzony w DB
-login:
-    - 401 - user nie utworzony w DB
-    - 202 - user istnieje i zostal zwrocony
-register:
-    - 203 - user zostal poprawnie utworzony w DB
-    - 402 - nie udalo sie utworzyc usera w DB

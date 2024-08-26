@@ -1,6 +1,6 @@
 package com.kansh.zeus.utils;
 
-import com.kansh.zeus.repositories.users.UserRepository;
+import com.kansh.zeus.repository.users.UserRepository;
 import org.springframework.stereotype.Component;
 import java.util.Random;
 import java.security.MessageDigest;

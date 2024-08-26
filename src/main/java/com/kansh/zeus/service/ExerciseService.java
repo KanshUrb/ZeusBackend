@@ -1,0 +1,44 @@
+package com.kansh.zeus.service;
+
+import com.kansh.zeus.domain.dto.exercises.ExerciseDetailsDto;
+import com.kansh.zeus.domain.dto.exercises.SupersetWrapperDto;
+import com.kansh.zeus.domain.entities.exercises.ExercisesEntity;
+import com.kansh.zeus.domain.entities.exercises.SupersetsEntity;
+import com.kansh.zeus.domain.entities.users.UsersEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ExerciseService {
+
+    List<UsersEntity> getSharedWith(int itemType, Long itemId);
+
+    Page<Object[]> getExercisesSummariesAvailableForUser(String userId, Pageable pageable);
+
+    Optional<ExercisesEntity> getExerciseByUserAndId(String userId, Long id);
+
+    ExercisesEntity createExercise(ExercisesEntity exercise, UsersEntity user, List<String> sharedWith);
+
+    void deleteExercise(Long exerciseId, String userId);
+
+    ExerciseDetailsDto updateExercise(String userId, ExercisesEntity exercise, ExerciseDetailsDto exerciseDetails);
+
+    Page<Object[]> getSupersetsSummariesAvailableForUser(String userId, Pageable pageable);
+
+    Optional<SupersetsEntity> getSupersetByUserAndId(String userId, Long id);
+
+    Optional<ExercisesEntity> getExerciseById(Long id);
+
+    SupersetsEntity createSuperset(SupersetsEntity superset, UsersEntity user, List<String> sharedWith);
+
+    void deleteSuperset(Long supersetId, String userId);
+
+    SupersetWrapperDto updateSuperset(String userId, SupersetsEntity superset, SupersetWrapperDto supersetWrapperDto);
+
+    Float rateExercise(Long exerciseId, Integer rate);
+
+    Float rateSuperset(Long supersetId, Integer rate);
+
+}
